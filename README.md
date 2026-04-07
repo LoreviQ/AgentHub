@@ -240,6 +240,7 @@ That means the MVP should bias toward:
 - clear auditing and transparent permissions
 
 The detailed MVP delivery plan lives in [docs/MVP_EXECUTION_PLAN.md](/home/lore/workspace/agenthub/docs/MVP_EXECUTION_PLAN.md).
+The package contract introduced in Step 1 lives in [docs/AGENT_PACKAGE_CONTRACT.md](/home/lore/workspace/agenthub/docs/AGENT_PACKAGE_CONTRACT.md).
 
 ## What Success Looks Like
 
