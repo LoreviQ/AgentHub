@@ -107,7 +107,7 @@ This should feel like the first slice of a marketplace, but without the marketpl
 
 The actual agent content can change, but the two agents should be meaningfully different so the platform looks real.
 
-Recommended setup:
+Demo setup:
 
 ### Agent 1: Legal Document Concern Checker
 
@@ -271,13 +271,13 @@ Execution model:
 - the LLM may call those tools or may answer directly
 - it returns the formatted result and logs the run
 
-Recommended implementation:
+Implementation:
 
 - `FastAPI` for the HTTP API
 - `Pydantic` for config validation
 - `PydanticAI` for the model invocation and tool-calling layer
 
-Why `PydanticAI` is a good fit:
+Implementation rationale:
 
 - it is designed as a Python agent framework
 - it supports multiple model providers
@@ -303,21 +303,19 @@ This preserves the product shape you want:
 - custom code is an optional augmentation
 - the custom code is called only when the agent decides it is needed
 
-## Custom-Code Networking Recommendation
+## Tool Execution Design
 
-For the MVP, I do not recommend making every custom-code agent a permanently running internal service.
+The MVP will use one-shot container jobs for custom tools.
 
-That approach works, but it adds unnecessary complexity:
+This avoids:
 
 - network topology decisions
 - service discovery
 - per-agent port management
 - long-running container lifecycle
-- more surface area for isolation mistakes
+- additional isolation complexity
 
-### Recommended Approach: One-Shot Container Jobs
-
-Instead, for tool-enabled agents:
+Implementation:
 
 - the shared LLM runtime invokes a tool adapter
 - the tool adapter starts a short-lived container job when a tool call is needed
@@ -325,7 +323,7 @@ Instead, for tool-enabled agents:
 - the tool result is captured from stdout or a written output file
 - the container is stopped and removed after the tool call completes
 
-Why this is better:
+Implementation benefits:
 
 - no always-on internal HTTP service required
 - no custom per-agent Docker network required
@@ -333,40 +331,65 @@ Why this is better:
 - much easier to audit and demonstrate
 - closer to a secure job execution model
 
-This means the shared runtime does not need to call `https://image-name:port/their-api` at all in the MVP.
+## Runtime Architecture
 
-### If We Do Want HTTP Inside The Container
+The MVP will use a small multi-service architecture.
 
-If we later decide a tool should expose an internal API, the best pattern is:
+Core services:
 
-- create a user-defined bridge network per execution or per agent
-- attach the shared runtime container and the tool container to that same network
-- address the tool container by container name or alias
+- web application
+- backend and shared agent runner
+- PostgreSQL database
+- container image registry for tool images
 
-Docker’s official networking docs state that containers on the same user-defined bridge network can communicate by name, and that running containers can be attached to user-defined networks on the fly.
+The backend API and shared LLM runtime will live in a single service for the MVP.
 
-Important constraint:
+### Web Application Service
 
-- containers on different bridge networks do not communicate directly unless ports are published or the container is attached to multiple networks
+- React with Vite
+- public agent pages
+- copy-to-clipboard UX
+- example invocation flows
 
-So yes, requests across “other networks” are possible only if:
-
-- the container is attached to both networks
-- or the destination publishes a port reachable from the caller
-
-For the MVP, that is still more complexity than we need.
-
-## Runtime Recommendation
-
-Recommended final architecture:
-
-### Shared Backend Service
+### Backend And Shared Agent Runner Service
 
 - FastAPI API server
 - agent registry loader
 - shared LLM execution loop using PydanticAI
 - tool dispatcher
 - run logging
+
+This is one service in the MVP. It owns:
+
+- public API endpoints
+- agent loading and validation
+- model execution
+- tool invocation
+- persistence writes
+
+This keeps the first build simpler. If needed later, the API layer and runner can be separated into independent services.
+
+### Database Service
+
+- PostgreSQL
+- SQLAlchemy models and sessions
+- Alembic migrations
+- run logs
+- agent metadata and versions
+- future support for richer registry state
+
+### Image Registry
+
+- stores tool container images referenced by `agent.yaml`
+- provides pullable image tags for runtime execution
+
+For the MVP, this should use an existing registry rather than building a custom artifact repository.
+
+Preferred options:
+
+- GitHub Container Registry
+- Docker Hub private repositories
+- a self-hosted OCI registry only if required by deployment constraints
 
 ### Agent 1
 
@@ -379,7 +402,7 @@ Recommended final architecture:
 - one or more custom tools declared in config
 - tools executed through the platform tool dispatcher
 
-This gives us a clean control plane:
+Resulting control plane:
 
 - one API
 - one registry format
@@ -397,45 +420,93 @@ This gives us a clean control plane:
 ### Custom Tools
 
 - one tool image per tool bundle, or one shared tool-runner image if code shape stays uniform
+- stored in an OCI-compatible image registry
 - launched with `docker run --rm` or equivalent SDK call
 - input mounted or piped in
 - output read back by the backend
 - container removed after completion
 
-Recommendation:
+Build rules:
 
 - one shared execution path for all agents
 - short-lived tool containers only for agents that declare tools
-- avoid long-lived internal tool services in the MVP
+- no long-lived internal tool services in the MVP
 
 ## Deployment Environment
 
-We already have a Hetzner server, so the MVP should be designed around a single-host deployment.
+The MVP will run on the existing Hetzner server and be managed through Coolify.
 
-Recommended deployment shape:
+Deployment shape:
 
-- Hetzner VPS or dedicated box as the primary execution host
+- Coolify as the deployment and routing layer
+- Hetzner VPS or dedicated box as the execution host
 - Docker for packaging and runtime isolation
-- Docker Compose for service orchestration
-- Nginx or Caddy as reverse proxy
-- systemd or Compose restart policies for service resilience
+- Coolify-managed application services and networking
+- PostgreSQL deployed as a managed service within Coolify or attached externally
+- public routing handled by Coolify
+
+Deployments to configure in Coolify:
+
+- `frontend` service
+- `backend` service
+- `postgres` service
+- optional worker or scheduled service later if background execution is introduced
 
 This is enough for an MVP and keeps operational complexity low.
 
-## Recommended Technology Stack
+## Secure Execution Approach
+
+The MVP security model should focus on controlled execution rather than overclaiming confidential computing.
+
+Security controls to implement:
+
+- all agent requests enter through the shared backend service
+- only tool images explicitly declared in `agent.yaml` may be executed
+- tool containers run as short-lived one-shot jobs
+- internet access is disabled for tool containers unless explicitly required later
+- tool containers receive only the minimum input required for the tool call
+- tool containers are removed immediately after execution
+- resource limits are applied to CPU, memory, runtime duration, and filesystem usage
+- backend-held provider credentials are never passed directly into tool containers
+- run metadata is logged for auditability
+
+Container runtime rules:
+
+- run as non-root where possible
+- use read-only root filesystem where possible
+- mount only temporary working data
+- disable privileged mode
+- drop unnecessary Linux capabilities
+- enforce timeout-based termination
+
+Platform boundary for the MVP:
+
+- the backend service is trusted platform code
+- tool images are approved demo artifacts
+- arbitrary user-uploaded code is out of scope
+
+This gives the MVP a credible secure execution story:
+
+- all LLM activity is platform mediated
+- creator-defined code is isolated from the shared runtime
+- custom code runs with narrow permissions and short lifetimes
+
+## Technology Stack
 
 The stack should optimise for fast delivery, clarity, and easy demoability.
 
 ### Backend
 
-Recommended:
+Backend stack:
 
 - `FastAPI` for the API server
 - `Pydantic` for agent config validation
 - `PydanticAI` for shared LLM execution
+- `SQLAlchemy` for ORM and DB access
+- `Alembic` for schema migrations
 - `Uvicorn` for serving
 
-Why:
+Why this backend:
 
 - fast to build
 - strong typed request/response models
@@ -445,26 +516,22 @@ Why:
 
 ### Frontend
 
-Recommended:
+Frontend stack:
 
-- `Next.js` or a simple React frontend
-- or plain server-rendered templates if speed matters more than polish
+- `React`
+- `Vite`
+- standard browser Clipboard API
 
-Recommendation:
+Chosen direction:
 
-Use `Next.js` if you want a nicer demo experience and clipboard UX quickly.
-Use server-rendered templates if you want the absolute shortest build path.
-
-For this MVP, I would lean toward:
-
-- frontend: `Next.js`
+- frontend: `React` with `Vite`
 - backend: `FastAPI`
 
 That gives a clean split between the demo website and the execution engine.
 
 ### Execution Layer
 
-Recommended:
+Execution stack:
 
 - Docker containers
 - platform-owned model API integration for all agents
@@ -472,18 +539,21 @@ Recommended:
 
 ### Persistence
 
-Recommended:
+Persistence:
 
-- SQLite for initial run logs and agent registry metadata
+- `PostgreSQL` for run logs and agent registry metadata
+- `SQLAlchemy` for persistence layer
+- `Alembic` for schema migrations
 
-Why:
+Why this persistence choice:
 
-- zero ops
-- perfectly adequate for a 2-agent MVP
+- closer to the production direction
+- better fit for evolving agent metadata and run history
+- integrates cleanly with Coolify deployments
 
 ### Clipboard and Demo UX
 
-Recommended:
+Clipboard and demo UX:
 
 - standard browser Clipboard API
 - prebuilt “copy command” block on each agent page
@@ -690,13 +760,15 @@ Deliverables:
 
 - backend code that scans the `agents/` directory
 - config validation
-- in-memory or SQLite-backed agent registry
+- PostgreSQL-backed agent registry metadata
 
 Work:
 
 - load YAML
 - load markdown instructions
 - validate agent metadata
+- define SQLAlchemy models
+- create Alembic migrations
 - expose read endpoints
 
 Exit criteria:
@@ -748,9 +820,10 @@ Exit criteria:
 
 Deliverables:
 
-- Docker Compose setup for local and Hetzner deployment
+- Dockerfiles and deployment config for Coolify
 - backend container
 - frontend container
+- PostgreSQL service definition
 - any required tool image definitions
 
 Work:
@@ -758,10 +831,12 @@ Work:
 - define shared platform services
 - define tool image build path
 - configure secrets and environment variables
+- configure Coolify service routing
+- configure database connection and migrations
 
 Exit criteria:
 
-- the full stack can be started on the Hetzner host
+- the full stack can be deployed through Coolify on the Hetzner host
 
 ### Step 7: Build The Demo Website
 
@@ -794,8 +869,8 @@ Deliverables:
 
 Work:
 
-- provision Docker/Compose
-- configure domain and HTTPS
+- configure Coolify deployment targets
+- configure domain and HTTPS in Coolify
 - store API keys securely in server env
 - verify execution from the public URL
 
@@ -827,11 +902,13 @@ To keep momentum high, these are the defaults I would use unless we discover a b
 
 - Backend: `FastAPI`
 - LLM framework: `PydanticAI`
-- Frontend: `Next.js`
+- Frontend: `React` with `Vite`
 - Runtime packaging: `Docker`
-- Orchestration: `Docker Compose`
-- Persistence: `SQLite`
-- Reverse proxy: `Caddy` or `Nginx`
+- Persistence: `PostgreSQL`
+- ORM: `SQLAlchemy`
+- Migrations: `Alembic`
+- Image registry: `GHCR` or another OCI-compatible registry
+- Deployment platform: `Coolify`
 - Server: existing Hetzner host
 - Agent config: `YAML`
 - Agent instructions: `Markdown`
@@ -849,14 +926,13 @@ agents/
     agent.yaml
     example-input.txt
     example-output.md
-  contract-comparer/
+  clause-extractor/
     agent.md
     agent.yaml
     example-input.txt
     example-output.md
 docker/
   base-runtime/
-docker-compose.yml
 docs/
 ```
 
