@@ -1,0 +1,22 @@
+schema_version: 1
+id: legal-checker
+name: Legal Document Concern Checker
+description: Reviews legal text and flags concerns that deserve follow-up.
+version: 0.1.0
+model:
+  provider: openrouter
+  name: gpt-5-mini
+  temperature: 0.2
+  max_tokens: 1800
+runtime:
+  timeout_seconds: 60
+  internet_access: false
+  execution_notes: LLM-only demo agent executed through the shared AgentHub runtime.
+io:
+  input_mode: text
+  output_mode: markdown
+tools:
+  enabled: false
+  items: []
+public_instructions: |
+  Send a POST request to /api/agents/legal-checker/execute with the document text in JSON.

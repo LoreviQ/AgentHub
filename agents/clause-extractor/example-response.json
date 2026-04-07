@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "output": {
+    "clauses": [
+      {
+        "type": "termination",
+        "text": "Customer may terminate for material breach if the vendor fails to cure within 30 days of written notice."
+      },
+      {
+        "type": "renewal",
+        "text": "The agreement renews automatically for one-year terms unless either party gives 60 days' notice."
+      },
+      {
+        "type": "subprocessors",
+        "text": "Vendor may process customer data using approved subprocessors listed in Annex B."
+      }
+    ],
+    "explanation": "Structured clause extraction completed with the declared extraction tool."
+  }
+}
