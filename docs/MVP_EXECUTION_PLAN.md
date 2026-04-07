@@ -25,6 +25,33 @@ We do not need to build:
 - open publishing
 - ratings and reviews
 
+## Core Execution Model
+
+The MVP should use one shared agent execution loop for every agent.
+
+That shared runtime is responsible for:
+
+- loading `agent.md`
+- loading `agent.yaml`
+- assembling context
+- selecting the model/provider
+- running the LLM interaction
+- deciding whether any custom tools should be called
+
+The difference between the two demo agents is not a different top-level execution path.
+
+The difference is:
+
+- Agent 1 uses only prompt + model
+- Agent 2 uses prompt + model + optional custom tool calls
+
+This is a better representation of the product:
+
+- all agents are executed through the same platform-controlled LLM runtime
+- some agents are purely prompt-driven
+- some agents are augmented with creator-defined tools
+- the platform decides how those tools are exposed safely
+
 ## Demo Workflow To Prove
 
 This is the exact workflow the MVP should support.
@@ -95,17 +122,33 @@ Why it is good for the demo:
 - aligns with the trust narrative
 - easy to understand in a product demo
 
-### Agent 2: Contract Comparison or Policy Review Agent
+Execution type:
+
+- LLM-only
+
+### Agent 2: Clause Extractor Assistant
 
 Purpose:
 
-- either compares two contract versions
-- or reviews policy text against a fixed checklist
+- accepts legal or policy text
+- uses the shared LLM runtime to decide whether to call one or more custom text-processing tools
+- returns structured extraction results plus a short explanation
+
+Why this is a good custom-code demo:
+
+- it proves the platform can execute creator-defined code, not just prompts
+- it shows the LLM can selectively invoke tools depending on the delegated task
+- it creates a clear product story around specialised logic
+- it maps directly to the A2A thesis
 
 Why it is good for the demo:
 
 - shows that AgentHub can host more than one specialist agent
-- demonstrates a second workflow without needing a different platform architecture
+- demonstrates the custom-code USP directly
+
+Execution type:
+
+- shared LLM runtime with custom tools
 
 ## Agent Package Format For MVP
 
@@ -120,14 +163,14 @@ agents/
     agent.yaml
     example-input.txt
     example-response.json
-  policy-reviewer/
+  clause-extractor/
     agent.md
     agent.yaml
     example-input.txt
     example-response.json
 ```
 
-If custom execution logic is needed, the agent package can also reference a shared container image or an agent-specific image.
+If custom tool logic is needed, the agent package can also reference a custom tool image and tool configuration.
 
 ### Required Files
 
@@ -143,8 +186,8 @@ If custom execution logic is needed, the agent package can also reference a shar
 - machine-readable runtime config
 - selected model
 - temperature and token settings
-- endpoint metadata
-- container/image reference
+- tool access policy
+- custom tool/image reference
 - timeout and resource limits
 
 Optional supporting files:
@@ -165,8 +208,9 @@ The exact format can evolve, but for the MVP it should include:
 - `temperature`
 - `max_tokens`
 - `timeout_seconds`
-- `container_image`
-- `entrypoint`
+- `tools_enabled`
+- `tool_image`
+- `tool_entrypoint`
 - `input_mode`
 - `output_mode`
 - `internet_access`
@@ -182,8 +226,7 @@ model: gpt-5-mini
 temperature: 0.2
 max_tokens: 1800
 timeout_seconds: 60
-container_image: ghcr.io/agenthub/base-agent:latest
-entrypoint: /app/run-agent
+tools_enabled: false
 input_mode: text
 output_mode: markdown
 internet_access: false
@@ -191,46 +234,179 @@ public_instructions: |
   Send a POST request to /api/agents/legal-checker/execute with the user text.
 ```
 
+Tool-enabled example shape:
+
+```yaml
+id: clause-extractor
+name: Clause Extractor Assistant
+description: Extracts structured clauses and key metadata from contract text.
+model: gpt-5-mini
+temperature: 0.1
+max_tokens: 1800
+timeout_seconds: 60
+tools_enabled: true
+tool_image: ghcr.io/agenthub/clause-tools:latest
+tool_entrypoint: python /app/main.py
+input_mode: text
+output_mode: json
+internet_access: false
+public_instructions: |
+  Send a POST request to /api/agents/clause-extractor/execute with the document text.
+```
+
 ## Execution Model
 
 For the MVP, the important thing is not perfect generality. The important thing is demonstrable controlled execution.
 
+### Shared LLM Runtime Path
+
 Execution model:
 
-- the backend reads agent metadata from disk
-- it validates the config for known supported fields
-- it starts an isolated execution for the requested agent
-- it injects the agent instructions plus user input
-- it calls the selected model through the platform backend
+- the backend reads agent metadata from disk or a small registry database
+- it assembles the final prompt from `agent.md`, stored context, and request input
+- it selects the provider and model from `agent.yaml`
+- it creates the agent execution context
+- it runs the LLM through a platform-owned provider integration such as OpenRouter
+- if tool access is enabled, it exposes only that agent’s declared tools to the runtime
+- the LLM may call those tools or may answer directly
 - it returns the formatted result and logs the run
 
-The “spin up/down” story can be implemented in one of two ways:
+Recommended implementation:
 
-### Option A: Shared Runtime Container Per Invocation
+- `FastAPI` for the HTTP API
+- `Pydantic` for config validation
+- `PydanticAI` for the model invocation and tool-calling layer
 
-- one approved base image for all agents
-- agent package mounted or loaded at run time
-- each execution starts a short-lived container or job
+Why `PydanticAI` is a good fit:
 
-Why this is recommended:
+- it is designed as a Python agent framework
+- it supports multiple model providers
+- its official docs show built-in support for `OpenRouter`
+- it works naturally with typed request and response models
+- it is well suited to agents that may optionally call tools
 
-- simpler and faster for the MVP
-- still demonstrates that packaged components control execution
-- easier to run on a single Hetzner server
+Based on the current official docs, PydanticAI supports multiple providers and documents both OpenRouter integration and OpenAI-compatible provider patterns.
 
-### Option B: Dedicated Image Per Agent
+### Tool Execution Path
 
-- each agent references its own built image
-- execution starts a container from that image
+Execution model:
 
-Why this may be useful later:
+- the shared LLM runtime remains the orchestrator for every agent
+- if the agent has declared custom tools, the runtime can call them during the run
+- those tools should execute outside the shared runtime process
+- the tool result is returned to the LLM runtime
+- the LLM uses that tool output to produce the final response
 
-- stronger story for heterogeneous runtimes
-- closer to a future marketplace packaging model
+This preserves the product shape you want:
+
+- every agent is still fundamentally an LLM agent
+- custom code is an optional augmentation
+- the custom code is called only when the agent decides it is needed
+
+## Custom-Code Networking Recommendation
+
+For the MVP, I do not recommend making every custom-code agent a permanently running internal service.
+
+That approach works, but it adds unnecessary complexity:
+
+- network topology decisions
+- service discovery
+- per-agent port management
+- long-running container lifecycle
+- more surface area for isolation mistakes
+
+### Recommended Approach: One-Shot Container Jobs
+
+Instead, for tool-enabled agents:
+
+- the shared LLM runtime invokes a tool adapter
+- the tool adapter starts a short-lived container job when a tool call is needed
+- the tool input is passed through stdin, env, mounted file, or a temp volume
+- the tool result is captured from stdout or a written output file
+- the container is stopped and removed after the tool call completes
+
+Why this is better:
+
+- no always-on internal HTTP service required
+- no custom per-agent Docker network required
+- cleaner spin-up/down story for tool execution
+- much easier to audit and demonstrate
+- closer to a secure job execution model
+
+This means the shared runtime does not need to call `https://image-name:port/their-api` at all in the MVP.
+
+### If We Do Want HTTP Inside The Container
+
+If we later decide a tool should expose an internal API, the best pattern is:
+
+- create a user-defined bridge network per execution or per agent
+- attach the shared runtime container and the tool container to that same network
+- address the tool container by container name or alias
+
+Docker’s official networking docs state that containers on the same user-defined bridge network can communicate by name, and that running containers can be attached to user-defined networks on the fly.
+
+Important constraint:
+
+- containers on different bridge networks do not communicate directly unless ports are published or the container is attached to multiple networks
+
+So yes, requests across “other networks” are possible only if:
+
+- the container is attached to both networks
+- or the destination publishes a port reachable from the caller
+
+For the MVP, that is still more complexity than we need.
+
+## Runtime Recommendation
+
+Recommended final architecture:
+
+### Shared Backend Service
+
+- FastAPI API server
+- agent registry loader
+- shared LLM execution loop using PydanticAI
+- tool dispatcher
+- run logging
+
+### Agent 1
+
+- prompt + model only
+- no custom tools enabled
+
+### Agent 2
+
+- prompt + model
+- one or more custom tools declared in config
+- tools executed through the platform tool dispatcher
+
+This gives us a clean control plane:
+
+- one API
+- one registry format
+- one shared LLM runtime
+- optional tool execution when declared by the agent
+
+## Tool Container Strategy
+
+### Shared Runtime
+
+- runs in the backend service
+- handles all agent requests
+- invokes tools only when needed
+
+### Custom Tools
+
+- one tool image per tool bundle, or one shared tool-runner image if code shape stays uniform
+- launched with `docker run --rm` or equivalent SDK call
+- input mounted or piped in
+- output read back by the backend
+- container removed after completion
 
 Recommendation:
 
-Start with Option A unless one of the demo agents truly requires custom executable code.
+- one shared execution path for all agents
+- short-lived tool containers only for agents that declare tools
+- avoid long-lived internal tool services in the MVP
 
 ## Deployment Environment
 
@@ -256,6 +432,7 @@ Recommended:
 
 - `FastAPI` for the API server
 - `Pydantic` for agent config validation
+- `PydanticAI` for shared LLM execution
 - `Uvicorn` for serving
 
 Why:
@@ -264,6 +441,7 @@ Why:
 - strong typed request/response models
 - simple JSON API support
 - easy docs and testability
+- natural fit for provider-swappable model execution
 
 ### Frontend
 
@@ -289,8 +467,8 @@ That gives a clean split between the demo website and the execution engine.
 Recommended:
 
 - Docker containers
-- one approved base runtime image
-- platform-owned model API integration
+- platform-owned model API integration for all agents
+- short-lived container jobs for custom tools
 
 ### Persistence
 
@@ -338,6 +516,7 @@ Returns:
 - how to use it
 - example request
 - example response
+- whether custom tools are used
 
 ### Execute Agent
 
@@ -355,6 +534,7 @@ Response:
 - output
 - run id
 - duration
+- tool_calls_used
 
 ### Optional Demo Run History
 
@@ -473,12 +653,13 @@ Deliverables:
 - `agent.md` template
 - `agent.yaml` schema
 - directory structure for packaged agents
+- explicit tool declaration fields
 
 Decisions:
 
 - what fields are required
-- whether agents share one base image
-- what execution settings are configurable
+- what model settings are configurable
+- what tool declarations are configurable
 
 Exit criteria:
 
@@ -489,7 +670,7 @@ Exit criteria:
 Deliverables:
 
 - `legal-checker` package
-- `policy-reviewer` or `contract-comparer` package
+- `clause-extractor` or similar tool-enabled package
 - example inputs and outputs
 
 Work:
@@ -497,6 +678,7 @@ Work:
 - write prompts/instructions
 - choose model and settings
 - define public usage text
+- define tool image contract for the second agent
 
 Exit criteria:
 
@@ -521,45 +703,67 @@ Exit criteria:
 
 - `GET /api/agents` and `GET /api/agents/:id` work
 
-### Step 4: Build The Execution Endpoint
+### Step 4: Build Shared LLM Execution
 
 Deliverables:
 
 - `POST /api/agents/:id/execute`
+- provider abstraction
+- OpenRouter-backed execution path
 - run logging
-- timeout and error handling
 
 Work:
 
-- construct runtime payload from package + user input
-- call model through the backend
+- assemble prompt from config and markdown
+- call model through PydanticAI
 - return structured output
 - store minimal run records
 
 Exit criteria:
 
-- both demo agents can be executed successfully through the API
+- the first demo agent runs successfully via the API
 
-### Step 5: Add Containerised Spin-Up/Down
+### Step 5: Build Tool Invocation For The Second Agent
 
 Deliverables:
 
-- container execution path for agent runs
-- one base runtime image
-- Docker Compose setup for local and Hetzner deployment
+- tool dispatcher
+- input/output contract for tool containers
+- run logging
+- timeout and error handling
 
 Work:
 
-- define base image
-- launch per-run container or job
-- pass agent package/config into runtime
-- clean up after execution
+- expose declared tools to the shared LLM runtime
+- launch short-lived tool containers when tools are called
+- pass tool input into the image
+- capture tool output back into the runtime
+- enforce execution timeout and cleanup
 
 Exit criteria:
 
-- a run can start, execute, and terminate from packaged components on the server
+- the second demo agent can selectively call its custom tool and complete successfully
 
-### Step 6: Build The Demo Website
+### Step 6: Add Deployment Packaging
+
+Deliverables:
+
+- Docker Compose setup for local and Hetzner deployment
+- backend container
+- frontend container
+- any required tool image definitions
+
+Work:
+
+- define shared platform services
+- define tool image build path
+- configure secrets and environment variables
+
+Exit criteria:
+
+- the full stack can be started on the Hetzner host
+
+### Step 7: Build The Demo Website
 
 Deliverables:
 
@@ -579,7 +783,7 @@ Exit criteria:
 
 - a user can browse the two agents and copy invocation instructions
 
-### Step 7: Deploy To Hetzner
+### Step 8: Deploy To Hetzner
 
 Deliverables:
 
@@ -599,7 +803,7 @@ Exit criteria:
 
 - the demo is accessible externally and both agents can be invoked live
 
-### Step 8: Create The Separate Assistant Demo
+### Step 9: Create The Separate Assistant Demo
 
 Deliverables:
 
@@ -622,6 +826,7 @@ Exit criteria:
 To keep momentum high, these are the defaults I would use unless we discover a blocker.
 
 - Backend: `FastAPI`
+- LLM framework: `PydanticAI`
 - Frontend: `Next.js`
 - Runtime packaging: `Docker`
 - Orchestration: `Docker Compose`
@@ -660,7 +865,8 @@ docs/
 The MVP is done when all of the following are true:
 
 - two agent packages exist and are readable from config + markdown files
-- both agents can be executed from the platform backend
+- one agent runs through prompt + model only
+- one agent runs through prompt + model with custom tool access
 - execution can be demonstrated on the Hetzner server
 - the website shows both agents and their usage details
 - each agent page includes a copy-to-clipboard invocation block
@@ -676,5 +882,6 @@ That means we should optimise for:
 - credibility of execution
 - polished invocation UX
 - one clean A2A demonstration
+- a clear demonstration that shared LLM execution can optionally call creator-defined tools
 
 If we do those well, we will have a convincing MVP that proves the core AgentHub thesis without getting dragged into upload flows, payments, or marketplace complexity too early.
