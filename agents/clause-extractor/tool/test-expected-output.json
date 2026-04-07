@@ -1,0 +1,35 @@
+{
+  "clauses": [
+    {
+      "type": "termination",
+      "title": "Termination for material breach",
+      "text": "Customer may terminate for material breach if the vendor fails to cure within 30 days of written notice.",
+      "confidence": 0.98
+    },
+    {
+      "type": "renewal",
+      "title": "Automatic renewal",
+      "text": "The agreement renews automatically for one-year terms unless either party gives 60 days' notice.",
+      "confidence": 0.92
+    },
+    {
+      "type": "liability_cap",
+      "title": "Liability cap",
+      "text": "Vendor liability is capped at fees paid in the prior 12 months.",
+      "confidence": 0.95
+    },
+    {
+      "type": "subprocessors",
+      "title": "Subprocessor usage",
+      "text": "Vendor may process customer data using approved subprocessors listed in Annex B.",
+      "confidence": 0.9
+    },
+    {
+      "type": "data_processing",
+      "title": "Data processing",
+      "text": "Vendor may process customer data using approved subprocessors listed in Annex B.",
+      "confidence": 0.9
+    }
+  ],
+  "tool_version": "0.1.0"
+}
