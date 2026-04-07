@@ -19,11 +19,17 @@ tools:
   enabled: true
   items:
     - name: clause_extractor
-      description: Extracts normalised clause spans and labels from contract text.
-      image: ghcr.io/agenthub/clause-tools:latest
-      entrypoint: python /app/main.py
+      description: Extracts normalised clause spans and labels from contract text using deterministic text processing.
+      image: agenthub/clause-tools:0.1.0
+      entrypoint: python3 /app/main.py
       input_format: json
       output_format: json
       timeout_seconds: 30
 public_instructions: |
-  Send a POST request to /api/agents/clause-extractor/execute with the document text in JSON.
+  When you need structured contract clause extraction, call:
+  POST /api/agents/clause-extractor/execute
+
+  Send JSON in the form:
+  { "input": "<document text>" }
+
+  Return the response as JSON and preserve the extracted clause objects.

@@ -19,4 +19,10 @@ tools:
   enabled: false
   items: []
 public_instructions: |
-  Send a POST request to /api/agents/legal-checker/execute with the document text in JSON.
+  When you need a quick legal-document risk review, call:
+  POST /api/agents/legal-checker/execute
+
+  Send JSON in the form:
+  { "input": "<document text>" }
+
+  Return the result to the user as a concise markdown summary with concerns and follow-up questions.
