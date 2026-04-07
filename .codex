@@ -1,0 +1,10 @@
+# Local workflow notes for this repo
+
+- Create a new branch for each new task.
+- Open a new GitLab merge request for each task-specific branch.
+- Use `glab` for GitLab merge request operations.
+- The git remote is `origin` at `git@git.oliver.tj:oliver.tj/agenthub.git`.
+- The default target branch is `main`.
+- Push new branches with `git push -u origin <branch>`.
+- Create merge requests with `glab mr create --source-branch <branch> --target-branch main`.
+- If sandbox restrictions block git metadata or network actions, request escalated permissions for branch creation, commits, pushes, and MR creation.
