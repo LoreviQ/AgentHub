@@ -26,6 +26,16 @@ GET {{api}}/agents/clause-extractor
 Accept: application/json
 
 ###
+# Execute the first demo agent
+POST {{api}}/agents/legal-checker/execute
+Accept: application/json
+Content-Type: application/json
+
+{
+  "input": "This agreement renews automatically every 12 months unless terminated 60 days in advance. Vendor liability is capped at fees paid in the prior 3 months."
+}
+
+###
 # Not found case
 GET {{api}}/agents/does-not-exist
 Accept: application/json
