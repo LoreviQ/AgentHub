@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from alembic import command
@@ -12,8 +13,11 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.orm import Session
 
 
-def _run_migrations() -> None:
+def _run_migrations(tmp_path: Path, database_url: str) -> None:
+    env_path = tmp_path / "test.env"
+    env_path.write_text(f"AGENTHUB_DATABASE_URL={database_url}\n", encoding="utf-8")
     alembic_config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    alembic_config.cmd_opts = SimpleNamespace(x=[f"env={env_path}"])
     command.upgrade(alembic_config, "head")
 
 
@@ -25,7 +29,7 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
     get_settings.cache_clear()
     settings = get_settings()
 
-    _run_migrations()
+    _run_migrations(tmp_path, settings.database_url)
     engine = get_engine()
     sync_registry(engine=engine, settings=settings)
 
@@ -65,7 +69,7 @@ def test_sync_registry_is_idempotent(tmp_path: Path, monkeypatch) -> None:
     get_settings.cache_clear()
     settings = get_settings()
 
-    _run_migrations()
+    _run_migrations(tmp_path, settings.database_url)
     engine = get_engine()
 
     sync_registry(engine=engine, settings=settings)
@@ -80,7 +84,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
     get_settings.cache_clear()
     settings = get_settings()
 
-    _run_migrations()
+    _run_migrations(tmp_path, settings.database_url)
     engine = get_engine()
     sync_registry(engine=engine, settings=settings)
 
@@ -100,7 +104,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
         ) -> AgentExecutionResult:
             assert "Legal Document Concern Checker" in system_prompt
             assert user_input == "This agreement renews automatically every year."
-            assert model_name == "gpt-5-mini"
+            assert model_name == "openai/gpt-5-mini"
             assert temperature == pytest.approx(0.2)
             assert max_tokens == 1800
             assert output_mode == "markdown"
@@ -148,7 +152,7 @@ async def test_execute_tool_enabled_agent_returns_not_implemented(
     get_settings.cache_clear()
     settings = get_settings()
 
-    _run_migrations()
+    _run_migrations(tmp_path, settings.database_url)
     engine = get_engine()
     sync_registry(engine=engine, settings=settings)
 
@@ -164,3 +168,13 @@ async def test_execute_tool_enabled_agent_returns_not_implemented(
 
     assert response.status_code == 501
     assert "Tool-enabled agents" in response.json()["detail"]
+
+
+def test_normalize_openrouter_model_name() -> None:
+    from backend.services.execution import _normalize_openrouter_model_name
+
+    assert _normalize_openrouter_model_name("gpt-5-mini") == "openai/gpt-5-mini"
+    assert (
+        _normalize_openrouter_model_name("anthropic/claude-sonnet-4")
+        == "anthropic/claude-sonnet-4"
+    )

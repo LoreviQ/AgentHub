@@ -57,9 +57,10 @@ class OpenRouterProvider:
             if output_mode == "json"
             else "Return markdown only."
         )
+        resolved_model_name = _normalize_openrouter_model_name(model_name)
         agent = Agent(
             model=OpenAIChatModel(
-                model_name,
+                resolved_model_name,
                 provider=OpenRouterProvider(),
             ),
             system_prompt=f"{system_prompt}\n\n{output_instructions}",
@@ -76,6 +77,12 @@ def get_provider(*, provider_name: str) -> LLMProvider:
     if provider_name == "openrouter":
         return OpenRouterProvider()
     raise AgentExecutionError(f"Unsupported model provider '{provider_name}'.")
+
+
+def _normalize_openrouter_model_name(model_name: str) -> str:
+    if "/" in model_name:
+        return model_name
+    return f"openai/{model_name}"
 
 
 def build_system_prompt(record: AgentRecord) -> str:

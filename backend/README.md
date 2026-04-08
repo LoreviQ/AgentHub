@@ -29,7 +29,7 @@ Run the API itself through the VS Code launch profile in [.vscode/launch.json](/
 ```bash
 cd /home/lore/workspace/AgentHub/backend
 AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agenthub \
-UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
+UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic -x env=.env.local upgrade head
 
 OPENROUTER_API_KEY=sk-or-v1-... \
 AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agenthub \
@@ -40,18 +40,18 @@ UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run uvicorn backend.main:app --app-di
 
 ```bash
 cd /home/lore/workspace/AgentHub/backend
-UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
+UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic -x env=.env.local upgrade head
 ```
 
 The app reads values from the process environment only. Use `backend/.env.example` as the documented template, and let your execution context load `backend/.env.local` when needed, such as VS Code `envFile` or Docker Compose.
 
 `POST /api/agents/{id}/execute` uses the shared LLM runtime. For real model execution you must provide `OPENROUTER_API_KEY`. The test suite stubs the provider, so tests do not require live model access.
 
-The backend no longer creates tables on startup. Run `alembic upgrade head` before starting the API so schema changes always flow through migrations.
+The backend no longer creates tables on startup. Run `alembic -x env=.env.local upgrade head` before starting the API so schema changes always flow through migrations.
 
 When the schema changes:
 
 1. Update the SQLAlchemy models.
 2. Create a new Alembic revision.
 3. Commit that migration file.
-4. Restart the local stack or rerun the migration job so `alembic upgrade head` applies it.
+4. Restart the local stack or rerun the migration job so `alembic -x env=.env.local upgrade head` applies it.
