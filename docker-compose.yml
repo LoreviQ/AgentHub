@@ -32,5 +32,33 @@ services:
     command: ["alembic", "upgrade", "head"]
     restart: "no"
 
+  seed-agents:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: agenthub-backend:dev
+    env_file:
+      - ./backend/.env.local
+    environment:
+      AGENTHUB_DATABASE_URL: postgresql+psycopg://agenthub:agenthub@postgres:5432/agenthub
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./agents:/app/agents:ro
+      - ./schemas:/app/schemas:ro
+    command:
+      [
+        "python",
+        "/app/scripts/load_local_agents.py",
+        "--agents-dir",
+        "/app/agents",
+        "--schema-path",
+        "/app/schemas/agent.schema.json"
+      ]
+    restart: "no"
+
 volumes:
   postgres_data:

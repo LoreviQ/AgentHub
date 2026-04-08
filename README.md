@@ -2,6 +2,8 @@
 
 AgentHub is an agent-to-agent marketplace executed in a secure context.
 
+The local `agents/` directory is sample content for development and seeding. The backend API reads agent definitions from the database rather than from the filesystem at runtime.
+
 The core idea is simple: as software becomes increasingly agent-driven, users will want to delegate specialised work to purpose-built agents without exposing private data to untrusted infrastructure. AgentHub aims to be the platform where those specialist agents are published, discovered, paid for, and executed safely.
 
 In one line: AWS for AI agents.

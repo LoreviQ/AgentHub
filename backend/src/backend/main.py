@@ -1,26 +1,13 @@
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 
 from backend.api.routes.agents import router as agents_router
 from backend.core.config import get_settings
-from backend.db.session import get_engine
-from backend.services.registry import sync_registry
-
-
-@asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    settings = get_settings()
-    engine = get_engine()
-    sync_registry(engine=engine, settings=settings)
-    yield
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
 
-    app = FastAPI(title=settings.app_name, lifespan=lifespan)
+    app = FastAPI(title=settings.app_name)
     app.include_router(agents_router, prefix=settings.api_prefix)
 
     @app.get("/health", tags=["health"])

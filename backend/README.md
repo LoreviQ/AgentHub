@@ -7,20 +7,20 @@ FastAPI backend for the AgentHub MVP.
 ```bash
 cd /home/lore/workspace/AgentHub
 cp backend/.env.example backend/.env.local
-docker compose up --build -d postgres migrate
+docker compose up --build -d postgres migrate seed-agents
 ```
 
 This starts:
 
 - `postgres`
 - `migrate` as a one-shot Alembic job
+- `seed-agents` as a one-shot loader for the example local agents
 
 The migration service uses the multi-stage image built from [backend/Dockerfile](/home/lore/workspace/AgentHub/backend/Dockerfile). The image bakes in:
 
 - the installed backend package
 - Alembic config and migration files
-- the packaged agents
-- the JSON schema files
+- the standalone loader scripts
 
 Run the API itself through the VS Code launch profile in [.vscode/launch.json](/home/lore/workspace/AgentHub/.vscode/launch.json).
 
@@ -47,7 +47,7 @@ The app reads values from the process environment only. Use `backend/.env.exampl
 
 `POST /api/agents/{id}/execute` uses the shared LLM runtime. For real model execution you must provide `OPENROUTER_API_KEY`. The test suite stubs the provider, so tests do not require live model access.
 
-The backend no longer creates tables on startup. Run `alembic -x env=.env.local upgrade head` before starting the API so schema changes always flow through migrations.
+The backend no longer creates tables or imports example agents on startup. Run `alembic -x env=.env.local upgrade head` before starting the API, and run the separate loader if you want the local example agents written into the database.
 
 When the schema changes:
 

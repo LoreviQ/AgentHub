@@ -8,7 +8,7 @@ from backend.core.config import get_settings
 from backend.db.models import AgentRunRecord
 from backend.db.session import get_engine, reset_database_state
 from backend.services.execution import AgentExecutionResult
-from backend.services.registry import sync_registry
+from backend.services.registry import SeedAgentRecord, SeedAgentTool, sync_registry
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.orm import Session
 
@@ -16,9 +16,85 @@ from sqlalchemy.orm import Session
 def _run_migrations(tmp_path: Path, database_url: str) -> None:
     env_path = tmp_path / "test.env"
     env_path.write_text(f"AGENTHUB_DATABASE_URL={database_url}\n", encoding="utf-8")
-    alembic_config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    backend_root = Path(__file__).resolve().parents[1]
+    alembic_config = Config(str(backend_root / "alembic.ini"))
+    alembic_config.set_main_option("script_location", str(backend_root / "alembic"))
+    alembic_config.set_main_option("prepend_sys_path", str(backend_root / "src"))
     alembic_config.cmd_opts = SimpleNamespace(x=[f"env={env_path}"])
     command.upgrade(alembic_config, "head")
+
+
+def _seed_example_agents() -> list[SeedAgentRecord]:
+    return [
+        SeedAgentRecord(
+            slug="clause-extractor",
+            name="Clause Extractor Assistant",
+            description="Extracts structured clauses from contract text with optional tool support.",
+            version="0.1.0",
+            schema_version=1,
+            instructions_markdown="# Clause Extractor Assistant",
+            public_instructions=(
+                "When you need structured contract clause extraction, call:\n"
+                "POST /api/agents/clause-extractor/execute"
+            ),
+            model_provider="openrouter",
+            model_name="openai/gpt-5-mini",
+            model_temperature=0.1,
+            model_max_tokens=1800,
+            runtime_timeout_seconds=60,
+            runtime_internet_access=False,
+            runtime_execution_notes=(
+                "Tool-capable demo agent that may invoke approved short-lived container jobs."
+            ),
+            input_mode="text",
+            output_mode="json",
+            package_path="/examples/clause-extractor",
+            example_input_path="/examples/clause-extractor/example-input.txt",
+            example_output_path="/examples/clause-extractor/example-response.json",
+            raw_config={"id": "clause-extractor"},
+            tools=[
+                SeedAgentTool(
+                    name="clause_extractor",
+                    description=(
+                        "Extracts normalised clause spans and labels from contract text using deterministic text processing."
+                    ),
+                    image="agenthub/clause-tools:0.1.0",
+                    entrypoint="python3 /app/main.py",
+                    input_format="json",
+                    output_format="json",
+                    timeout_seconds=30,
+                )
+            ],
+        ),
+        SeedAgentRecord(
+            slug="legal-checker",
+            name="Legal Document Concern Checker",
+            description="Reviews legal text and flags concerns that deserve follow-up.",
+            version="0.1.0",
+            schema_version=1,
+            instructions_markdown="# Legal Document Concern Checker",
+            public_instructions=(
+                "When you need a quick legal-document risk review, call:\n"
+                "POST /api/agents/legal-checker/execute"
+            ),
+            model_provider="openrouter",
+            model_name="openai/gpt-5-mini",
+            model_temperature=0.2,
+            model_max_tokens=1800,
+            runtime_timeout_seconds=60,
+            runtime_internet_access=False,
+            runtime_execution_notes=(
+                "LLM-only demo agent executed through the shared AgentHub runtime."
+            ),
+            input_mode="text",
+            output_mode="markdown",
+            package_path="/examples/legal-checker",
+            example_input_path="/examples/legal-checker/example-input.txt",
+            example_output_path="/examples/legal-checker/example-response.json",
+            raw_config={"id": "legal-checker"},
+            tools=[],
+        ),
+    ]
 
 
 @pytest.mark.anyio
@@ -27,11 +103,9 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
     reset_database_state()
     get_settings.cache_clear()
-    settings = get_settings()
-
-    _run_migrations(tmp_path, settings.database_url)
+    _run_migrations(tmp_path, get_settings().database_url)
     engine = get_engine()
-    sync_registry(engine=engine, settings=settings)
+    sync_registry(engine=engine, agents=_seed_example_agents())
 
     from backend.main import create_app
 
@@ -67,13 +141,12 @@ def test_sync_registry_is_idempotent(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
     reset_database_state()
     get_settings.cache_clear()
-    settings = get_settings()
-
-    _run_migrations(tmp_path, settings.database_url)
+    _run_migrations(tmp_path, get_settings().database_url)
     engine = get_engine()
 
-    sync_registry(engine=engine, settings=settings)
-    sync_registry(engine=engine, settings=settings)
+    agents = _seed_example_agents()
+    sync_registry(engine=engine, agents=agents)
+    sync_registry(engine=engine, agents=agents)
 
 
 @pytest.mark.anyio
@@ -82,11 +155,9 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
     monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
     reset_database_state()
     get_settings.cache_clear()
-    settings = get_settings()
-
-    _run_migrations(tmp_path, settings.database_url)
+    _run_migrations(tmp_path, get_settings().database_url)
     engine = get_engine()
-    sync_registry(engine=engine, settings=settings)
+    sync_registry(engine=engine, agents=_seed_example_agents())
 
     from backend import main
     from backend.services import execution
@@ -150,11 +221,9 @@ async def test_execute_tool_enabled_agent_returns_not_implemented(
     monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
     reset_database_state()
     get_settings.cache_clear()
-    settings = get_settings()
-
-    _run_migrations(tmp_path, settings.database_url)
+    _run_migrations(tmp_path, get_settings().database_url)
     engine = get_engine()
-    sync_registry(engine=engine, settings=settings)
+    sync_registry(engine=engine, agents=_seed_example_agents())
 
     from backend.main import create_app
 
