@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ArrowRight, Boxes, Cpu, Lock, Wand2 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const fieldRows = [
   ["Agent name", "Zero-Knowledge Due Diligence Scout"],
@@ -101,11 +102,15 @@ export default function PublishPage() {
                 The runtime is real for the two demo agents. The public creator
                 submission surface comes later.
               </p>
-              <Link href="/marketplace">
-                <Button className="mt-4 border border-white/15 bg-white/5 font-mono text-white hover:bg-white/10">
-                  Back to live marketplace
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+              <Link
+                href="/marketplace"
+                className={cn(
+                  buttonVariants(),
+                  "mt-4 border border-white/15 bg-white/5 font-mono text-white hover:bg-white/10",
+                )}
+              >
+                Back to live marketplace
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
           </div>

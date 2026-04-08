@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const repoUrl = process.env.NEXT_PUBLIC_GIT_REPO_URL;
 
@@ -64,8 +65,9 @@ const narrativeRows = [
 export default function Home() {
   return (
     <div className="min-h-screen text-zinc-100">
+      <div className="starfield" />
       <SiteHeader />
-      <main>
+      <main className="relative z-10">
         <section className="relative overflow-hidden border-b border-cyan-400/15">
           <div className="scan-grid absolute inset-0 opacity-25" />
           <div className="mx-auto grid min-h-[78vh] w-full max-w-7xl gap-12 px-4 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
@@ -73,10 +75,14 @@ export default function Home() {
               <Badge className="border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-200">
                 Trust-first agent marketplace
               </Badge>
-              <h1 className="mt-6 max-w-5xl text-5xl font-semibold tracking-tight text-white md:text-7xl">
-                Discover specialist agents.
-                <br />
-                Execute them in a secure context.
+              <h1 className="mt-6 flex max-w-5xl flex-col items-start gap-2 text-5xl font-semibold tracking-tight text-white md:text-7xl">
+                <span>Discover specialist agents.</span>
+                <span className="typing-line text-[0.82em] md:text-[0.8em]">
+                  <span className="typing-line__text">
+                    Execute them in a secure context.
+                  </span>
+                  <span className="typing-line__cursor">_</span>
+                </span>
               </h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-300">
                 AgentHub is building the trust layer for agent-to-agent
@@ -86,22 +92,36 @@ export default function Home() {
                 infrastructure.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link href="/marketplace">
-                  <Button className="border border-cyan-400/35 bg-cyan-400/12 font-mono text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.14)] hover:bg-cyan-400/20">
-                    Explore the 2 live agents
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                <Link
+                  href="/marketplace"
+                  className={cn(
+                    buttonVariants(),
+                    "border border-cyan-400/35 bg-cyan-400/12 font-mono text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.14)] hover:bg-cyan-400/20",
+                  )}
+                >
+                  Explore the 2 live agents
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
-                <Link href="/creator/publish">
-                  <Button className="border border-fuchsia-400/35 bg-fuchsia-500/12 font-mono text-fuchsia-100 hover:bg-fuchsia-500/18">
-                    Create agent concept
-                  </Button>
+                <Link
+                  href="/creator/publish"
+                  className={cn(
+                    buttonVariants(),
+                    "border border-fuchsia-400/35 bg-fuchsia-500/12 font-mono text-fuchsia-100 hover:bg-fuchsia-500/18",
+                  )}
+                >
+                  Create agent concept
                 </Link>
-                <a href={repoUrl} target="_blank" rel="noreferrer">
-                  <Button className="border border-white/15 bg-white/5 font-mono text-white hover:bg-white/10">
-                    <GitBranch className="mr-2 h-4 w-4" />
-                    View repo
-                  </Button>
+                <a
+                  href={repoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cn(
+                    buttonVariants(),
+                    "border border-white/15 bg-white/5 font-mono text-white hover:bg-white/10",
+                  )}
+                >
+                  <GitBranch className="mr-2 h-4 w-4" />
+                  View repo
                 </a>
               </div>
             </div>
@@ -195,15 +215,23 @@ export default function Home() {
                   host packaged specialists and execute them under platform control.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Link href="/agents/legal-checker">
-                    <Button className="border border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-100 hover:bg-cyan-400/18">
-                      Open legal-checker
-                    </Button>
+                  <Link
+                    href="/agents/legal-checker"
+                    className={cn(
+                      buttonVariants(),
+                      "border border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-100 hover:bg-cyan-400/18",
+                    )}
+                  >
+                    Open legal-checker
                   </Link>
-                  <Link href="/agents/clause-extractor">
-                    <Button className="border border-fuchsia-400/35 bg-fuchsia-500/10 font-mono text-fuchsia-100 hover:bg-fuchsia-500/18">
-                      Open clause-extractor
-                    </Button>
+                  <Link
+                    href="/agents/clause-extractor"
+                    className={cn(
+                      buttonVariants(),
+                      "border border-fuchsia-400/35 bg-fuchsia-500/10 font-mono text-fuchsia-100 hover:bg-fuchsia-500/18",
+                    )}
+                  >
+                    Open clause-extractor
                   </Link>
                 </div>
               </div>
@@ -236,6 +264,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <div className="mx-auto mb-8 mt-2 h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent" />
       </main>
     </div>
   );

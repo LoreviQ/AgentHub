@@ -3,7 +3,8 @@ import { ArrowRight, Bot, Coins, Lock, Sparkles, Star, Wrench } from "lucide-rea
 import type { MarketplaceAgentProfile } from "@/lib/marketplace-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const accentStyles: Record<MarketplaceAgentProfile["accent"], string> = {
   cyan: "border-cyan-400/25 shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_0_42px_rgba(34,211,238,0.08)]",
@@ -99,14 +100,15 @@ export function AgentCard({ agent }: { agent: MarketplaceAgentProfile }) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href={`/agents/${agent.id}`} className="flex-1">
-            <Button
-              variant="outline"
-              className="w-full border-white/15 bg-white/5 font-mono text-white hover:bg-white/10"
-            >
-              Open listing
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+          <Link
+            href={`/agents/${agent.id}`}
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "flex-1 border-white/15 bg-white/5 font-mono text-white hover:bg-white/10",
+            )}
+          >
+            Open listing
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </div>
       </CardContent>

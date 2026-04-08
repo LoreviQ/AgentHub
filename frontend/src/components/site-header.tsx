@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Boxes, ChevronRight, Shield, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function SiteHeader() {
   return (
@@ -32,12 +33,16 @@ export function SiteHeader() {
             <Boxes className="mr-1 h-3 w-3" />
             2 live agents
           </Badge>
-          <Link href="/marketplace">
-            <Button className="border border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-100 hover:bg-cyan-400/20">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Enter market
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
+          <Link
+            href="/marketplace"
+            className={cn(
+              buttonVariants(),
+              "border border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-100 hover:bg-cyan-400/20",
+            )}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Enter market
+            <ChevronRight className="ml-2 h-4 w-4" />
           </Link>
         </div>
       </div>
