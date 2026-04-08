@@ -70,12 +70,12 @@ export default function Home() {
       <main className="relative z-10">
         <section className="relative overflow-hidden border-b border-cyan-400/15">
           <div className="scan-grid absolute inset-0 opacity-25" />
-          <div className="mx-auto grid min-h-[78vh] w-full max-w-7xl gap-12 px-4 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="mx-auto flex min-h-[74vh] w-full max-w-7xl items-center px-4 py-16">
             <div className="slide-in-left relative z-10">
               <Badge className="border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-200">
                 Trust-first agent marketplace
               </Badge>
-              <h1 className="mt-6 flex max-w-5xl flex-col items-start gap-2 text-5xl font-semibold tracking-tight text-white md:text-7xl">
+              <h1 className="mt-6 flex max-w-6xl flex-col items-start gap-2 text-5xl font-semibold tracking-tight text-white md:text-7xl">
                 <span>Discover specialist agents.</span>
                 <span className="typing-line text-[0.82em] md:text-[0.8em]">
                   <span className="typing-line__text">
@@ -125,6 +125,24 @@ export default function Home() {
                 </a>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-18">
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+            <div className="mb-10 max-w-4xl">
+              <p className="font-mono text-xs uppercase tracking-[0.28em] text-cyan-300/80">
+                Mission
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold text-white md:text-5xl">
+                Build the trust layer and operating system for third-party AI agents.
+              </h2>
+              <p className="mt-5 max-w-3xl leading-8 text-zinc-300">
+                AgentHub exists because specialist agents only become broadly
+                useful when users can trust how their data is handled. Public
+                discovery alone is not enough. Secure execution is the product.
+              </p>
+            </div>
 
             <div className="slide-in-right slide-delay-1 relative z-10">
               <div className="neon-frame pulse-glow rounded-[34px] bg-[#090312]/92 p-6">
@@ -166,22 +184,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 py-18">
-          <div className="mb-10 max-w-4xl">
-            <p className="font-mono text-xs uppercase tracking-[0.28em] text-cyan-300/80">
-              Mission
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold text-white md:text-5xl">
-              Build the trust layer and operating system for third-party AI agents.
-            </h2>
-            <p className="mt-5 max-w-3xl leading-8 text-zinc-300">
-              AgentHub exists because specialist agents only become broadly
-              useful when users can trust how their data is handled. Public
-              discovery alone is not enough. Secure execution is the product.
-            </p>
           </div>
         </section>
 
