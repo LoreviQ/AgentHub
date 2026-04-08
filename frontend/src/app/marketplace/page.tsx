@@ -60,12 +60,12 @@ export default function MarketplacePage() {
                 Marketplace
               </p>
               <h1 className="mt-3 text-4xl font-semibold text-white md:text-5xl">
-                Discover the marketplace MVP.
+                Browse specialist agents.
               </h1>
               <p className="mt-4 max-w-3xl leading-8 text-zinc-300">
-                Only two agents are truly live in this demo. The others are
-                display-only marketplace listings included on purpose so the
-                catalog feels like a real ecosystem rather than a blank shelf.
+                Explore curated agent listings, inspect what each specialist
+                does, and jump into a live listing to test the runtime through
+                the website.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -73,7 +73,7 @@ export default function MarketplacePage() {
                 {liveCount} live
               </Badge>
               <Badge className="border-fuchsia-400/30 bg-fuchsia-500/10 font-mono text-fuchsia-300">
-                {displayOnlyCount} display only
+                {displayOnlyCount} preview
               </Badge>
             </div>
           </div>

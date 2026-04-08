@@ -30,7 +30,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-3 text-sm text-zinc-300">
           <Badge className="hidden border-emerald-400/30 bg-emerald-500/10 font-mono text-emerald-300 sm:inline-flex">
             <Boxes className="mr-1 h-3 w-3" />
-            2 live / 3 display only
+            2 live agents
           </Badge>
           <Link href="/marketplace">
             <Button className="border border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-100 hover:bg-cyan-400/20">

@@ -1,14 +1,14 @@
-## AgentHub Main Webapp (MVP Phase 1)
+## AgentHub Frontend
 
-AgentHub is a trust-first marketplace and execution layer for specialist AI agents.
-This app implements the core user-facing MVP flows:
+This frontend is the marketplace-style MVP website for AgentHub.
 
-- Public marketplace with search/filter/discovery
-- Agent listing detail pages with explicit permission risk disclosure
-- Creator publishing wizard based on an agent package contract
-- Secure invocation UI with explicit permission approval + audit output
-- User dashboard for billing, invocation history, and API keys
-- Mock API backend for all flows (App Router API routes)
+Current focus:
+
+- long-form landing page explaining the trust problem and secure execution story
+- marketplace page with live agent listings fetched from the backend
+- richer agent detail pages with chat testing, example payloads, and copyable invocation instructions
+- visual-only creator page for future marketplace onboarding
+- backend-proxied frontend API routes so the site can talk to the FastAPI service
 
 ## Tech Stack
 
@@ -16,8 +16,7 @@ This app implements the core user-facing MVP flows:
 - Tailwind CSS
 - Radix primitives + shadcn-style UI components
 - TanStack Query
-- Zod validation
-- In-memory seeded mock backend
+- frontend API proxy routes backed by the real backend agent API
 
 ## Run Locally
 
@@ -31,18 +30,22 @@ Open [http://localhost:3000](http://localhost:3000)
 
 Use Node `25.9.0` for this project. The repo now includes `.nvmrc`, so `nvm use` should select the expected runtime automatically.
 
+Set `NEXT_PUBLIC_GIT_REPO_URL` in `frontend/.env.local` for the repo link shown on the landing page.
+
 ## Key Routes
 
-- `/` - public marketplace
-- `/agents/[id]` - detailed listing + invoke dialog
-- `/creator/publish` - creator onboarding/publish wizard
+- `/` - long-scroll landing page
+- `/marketplace` - marketplace listing page
+- `/agents/[id]` - detailed listing + live test panel
+- `/creator/publish` - visual-only creator flow
 - `/login` - mock auth
 - `/dashboard` - protected user/personal assistant dashboard
 
-## Mock API Endpoints
+## Frontend API Routes
 
 - `GET /api/agents` - list + search/filter agents
 - `GET /api/agents/:id` - get one agent
+- `POST /api/agents/:id/execute` - execute one live agent
 - `POST /api/agents` - publish a new agent
 - `POST /api/agents/validate` - validate package metadata
 - `POST /api/invocations` - simulate secure invocation
@@ -51,22 +54,8 @@ Use Node `25.9.0` for this project. The repo now includes `.nvmrc`, so `nvm use`
 - `POST /api/keys` - create integration API key
 - `POST /api/auth/login` / `POST /api/auth/logout` - mock auth session
 
-## Mock Data + Storage Model
+## Deployment
 
-The data source lives in `src/lib/mock-db.ts` and is seeded on first access.
-It uses an in-memory singleton on `globalThis`, so data is reset when the server restarts.
-
-## Extending the Mock API
-
-1. Add/expand domain types in `src/lib/types.ts`
-2. Add validation in `src/lib/validators.ts`
-3. Add behaviors in `src/lib/mock-db.ts`
-4. Expose endpoints under `src/app/api/**/route.ts`
-5. Wire frontend requests in `src/lib/api-client.ts`
-
-## Security/Trust UX Notes in MVP
-
-- Explicit permission approval is required before invocation.
-- Permission risk levels are visually highlighted.
-- Invocation response includes mock audit trail events.
-- Dashboard exposes past invocation audit records and billing impact.
+- `docker/frontend/Dockerfile` builds and serves the Next.js app
+- `docker-compose.yml` now includes the `frontend-web` service
+- the frontend container talks to the backend through `AGENTHUB_BACKEND_URL`

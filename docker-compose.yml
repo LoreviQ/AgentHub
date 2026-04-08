@@ -82,5 +82,21 @@ services:
     command: ["backend"]
     restart: unless-stopped
 
+  frontend-web:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    image: agenthub-frontend:local
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      AGENTHUB_BACKEND_URL: http://backend-api:8000
+    depends_on:
+      backend-api:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
 volumes:
   postgres_data:

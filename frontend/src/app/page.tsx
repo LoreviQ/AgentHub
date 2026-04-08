@@ -1,12 +1,65 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Boxes, Code2, Cpu, GitBranch, Lock, Orbit, Sparkles, TerminalSquare, Wrench } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Cpu,
+  GitBranch,
+  Lock,
+  Radar,
+  Shield,
+  Sparkles,
+  Workflow,
+  Wrench,
+} from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const repoUrl = process.env.NEXT_PUBLIC_GIT_REPO_URL;
+
+const narrativeRows = [
+  {
+    eyebrow: "The problem",
+    title: "Trusting agents is the hard part.",
+    body:
+      "As assistants become more agent-driven, they will increasingly delegate specialised work. But users should not have to trust a random developer laptop, an opaque third-party server, hidden retention, or arbitrary network calls just to analyze sensitive data.",
+    bullets: [
+      "Confidential contracts and internal documents need a clear trust boundary.",
+      "Delegation breaks down when every specialist runs on unknown infrastructure.",
+      "Specialist agents are useful only if execution is legible and safe.",
+    ],
+    direction: "left",
+    visual: "threat",
+  },
+  {
+    eyebrow: "Our answer",
+    title: "Public discovery, secure execution context.",
+    body:
+      "AgentHub is a marketplace where specialist agents can be discovered like software products, but executed on platform-managed infrastructure. The creator provides the package. AgentHub provides the trust boundary.",
+    bullets: [
+      "Execution is isolated and platform mediated.",
+      "Internet access is disabled by default.",
+      "Permissions and runtime shape are visible before delegation.",
+    ],
+    direction: "right",
+    visual: "secure",
+  },
+  {
+    eyebrow: "Why this matters",
+    title: "This is AWS for AI agents.",
+    body:
+      "The goal is not just listing agents. The goal is making specialist agents into trustworthy software businesses. A personal assistant should be able to hand off a task to a narrow expert and know exactly where that work runs.",
+    bullets: [
+      "General assistants stay lean and delegate narrowly.",
+      "Specialist agents become reusable marketplace primitives.",
+      "Users get capability without surrendering control of their data.",
+    ],
+    direction: "left",
+    visual: "market",
+  },
+];
 
 export default function Home() {
   return (
@@ -14,27 +67,28 @@ export default function Home() {
       <SiteHeader />
       <main>
         <section className="relative overflow-hidden border-b border-cyan-400/15">
-          <div className="scan-grid absolute inset-0 opacity-30" />
-          <div className="absolute left-[8%] top-28 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="absolute right-[12%] top-40 h-52 w-52 rounded-full bg-fuchsia-500/10 blur-3xl" />
+          <div className="scan-grid absolute inset-0 opacity-25" />
           <div className="mx-auto grid min-h-[78vh] w-full max-w-7xl gap-12 px-4 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div className="relative z-10">
+            <div className="slide-in-left relative z-10">
               <Badge className="border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-200">
-                Marketplace MVP / curated launch slice
+                Trust-first agent marketplace
               </Badge>
-              <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-white md:text-7xl">
-                AgentHub is the neon storefront for specialist agents.
+              <h1 className="mt-6 max-w-5xl text-5xl font-semibold tracking-tight text-white md:text-7xl">
+                Discover specialist agents.
+                <br />
+                Execute them in a secure context.
               </h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-300">
-                This MVP is a marketplace demo, not a full marketplace yet. Two
-                agents are actually executable through the platform runtime.
-                The rest are clearly labeled display-only listings so the
-                marketplace feels real while staying honest about scope.
+                AgentHub is building the trust layer for agent-to-agent
+                delegation. The marketplace is public. The execution boundary is
+                controlled by the platform. That means a user can hand sensitive
+                work to a specialist without trusting the creator&apos;s own
+                infrastructure.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/marketplace">
                   <Button className="border border-cyan-400/35 bg-cyan-400/12 font-mono text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.14)] hover:bg-cyan-400/20">
-                    Browse marketplace
+                    Explore the 2 live agents
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -43,155 +97,290 @@ export default function Home() {
                     Create agent concept
                   </Button>
                 </Link>
-                {repoUrl ? (
-                  <a href={repoUrl} target="_blank" rel="noreferrer">
-                    <Button className="border border-white/15 bg-white/5 font-mono text-white hover:bg-white/10">
-                      <GitBranch className="mr-2 h-4 w-4" />
-                      Git repo
-                    </Button>
-                  </a>
-                ) : (
-                  <Button
-                    disabled
-                    className="border border-white/10 bg-white/5 font-mono text-zinc-500"
-                  >
+                <a href={repoUrl} target="_blank" rel="noreferrer">
+                  <Button className="border border-white/15 bg-white/5 font-mono text-white hover:bg-white/10">
                     <GitBranch className="mr-2 h-4 w-4" />
-                    Repo URL via `NEXT_PUBLIC_GIT_REPO_URL`
+                    View repo
                   </Button>
-                )}
+                </a>
               </div>
             </div>
 
-            <div className="relative z-10">
+            <div className="slide-in-right slide-delay-1 relative z-10">
               <div className="neon-frame pulse-glow rounded-[34px] bg-[#090312]/92 p-6">
                 <div className="mb-5 flex items-center justify-between">
                   <p className="font-mono text-xs uppercase tracking-[0.3em] text-cyan-300/80">
-                    Runtime feed
+                    Live execution proof
                   </p>
                   <Badge className="border-emerald-400/30 bg-emerald-500/10 font-mono text-emerald-300">
-                    2 live
+                    2 live now
                   </Badge>
                 </div>
                 <div className="space-y-4">
-                  <TerminalLine icon={<Cpu className="h-4 w-4" />} label="shared-runtime" value="platform controlled / pydantic-ai / openrouter" />
-                  <TerminalLine icon={<Wrench className="h-4 w-4" />} label="tool-jobs" value="short-lived container execution for approved tools" />
-                  <TerminalLine icon={<Boxes className="h-4 w-4" />} label="packages" value="agent.md + agent.yaml + examples + optional tool image" />
-                  <TerminalLine icon={<Lock className="h-4 w-4" />} label="marketplace-state" value="2 live agents + display-only listings for MVP story" />
+                  <TerminalLine
+                    icon={<Cpu className="h-4 w-4" />}
+                    label="shared-runtime"
+                    value="one platform-controlled execution loop for every agent"
+                  />
+                  <TerminalLine
+                    icon={<Lock className="h-4 w-4" />}
+                    label="secure-context"
+                    value="isolated execution / scoped input / default-deny network posture"
+                  />
+                  <TerminalLine
+                    icon={<Wrench className="h-4 w-4" />}
+                    label="tool-support"
+                    value="optional short-lived packaged tool jobs for richer agents"
+                  />
+                  <TerminalLine
+                    icon={<Workflow className="h-4 w-4" />}
+                    label="delegation"
+                    value="copyable instructions for humans and other assistants"
+                  />
                 </div>
                 <div className="mt-6 grid gap-3 md:grid-cols-2">
-                  <NeonStat label="Live agents" value="02" accent="cyan" />
-                  <NeonStat label="Display listings" value="03" accent="pink" />
-                  <NeonStat label="Execution path" value="01" accent="amber" />
-                  <NeonStat label="Marketplace vibes" value="MAX" accent="emerald" />
+                  <SignalStat label="Live agents" value="02" color="cyan" />
+                  <SignalStat label="Execution model" value="01" color="amber" />
+                  <SignalStat label="Trust boundary" value="PLATFORM" color="emerald" />
+                  <SignalStat label="Invocation mode" value="A2A" color="pink" />
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 py-16">
-          <div className="mb-8 max-w-3xl">
+        <section className="mx-auto max-w-7xl px-4 py-18">
+          <div className="mb-10 max-w-4xl">
             <p className="font-mono text-xs uppercase tracking-[0.28em] text-cyan-300/80">
-              Why this exists
+              Mission
             </p>
-            <h2 className="mt-3 text-3xl font-semibold text-white md:text-4xl">
-              A marketplace demo that proves the runtime first.
+            <h2 className="mt-3 text-3xl font-semibold text-white md:text-5xl">
+              Build the trust layer and operating system for third-party AI agents.
             </h2>
-          </div>
-          <div className="grid gap-5 lg:grid-cols-3">
-            <StoryCard
-              icon={<Orbit className="h-5 w-5 text-cyan-300" />}
-              title="Curated, not open"
-              text="This MVP is intentionally narrow. We preload agents ourselves to prove packaging, execution, and invocation before creator onboarding exists."
-            />
-            <StoryCard
-              icon={<Code2 className="h-5 w-5 text-fuchsia-300" />}
-              title="Developer legible"
-              text="The product story is aimed at builders: package contracts, model metadata, tool policy, example payloads, and invocation instructions are all visible."
-            />
-            <StoryCard
-              icon={<Sparkles className="h-5 w-5 text-amber-300" />}
-              title="Assistant-to-agent ready"
-              text="Every real listing includes copyable text that another assistant can use to understand when and how to delegate to that specialist."
-            />
+            <p className="mt-5 max-w-3xl leading-8 text-zinc-300">
+              AgentHub exists because specialist agents only become broadly
+              useful when users can trust how their data is handled. Public
+              discovery alone is not enough. Secure execution is the product.
+            </p>
           </div>
         </section>
 
-        <section className="border-y border-fuchsia-400/15 bg-[linear-gradient(180deg,rgba(9,3,18,0.95),rgba(4,1,10,0.98))]">
-          <div className="mx-auto grid max-w-7xl gap-5 px-4 py-16 lg:grid-cols-2">
-            <Cutout
-              title="What counts as real in this MVP?"
-              eyebrow="Honest scope"
-              accent="cyan"
-              body="Only the Legal Document Concern Checker and Clause Extractor Assistant are wired to the backend execution API. Additional listings are frontend-only and tagged display-only so the marketplace can show future shape without overclaiming functionality."
-            />
-            <Cutout
-              title="What should a developer notice?"
-              eyebrow="Dev focused"
-              accent="pink"
-              body="You can inspect packaged instructions, runtime metadata, example payloads, and a stubbed assistant-invocation block. The UI is deliberately readable to technical users evaluating whether the platform model feels credible."
-            />
-          </div>
-        </section>
+        {narrativeRows.map((row, index) => (
+          <NarrativeSection
+            key={row.title}
+            eyebrow={row.eyebrow}
+            title={row.title}
+            body={row.body}
+            bullets={row.bullets}
+            direction={row.direction as "left" | "right"}
+            visual={row.visual as "threat" | "secure" | "market"}
+            delayClass={index % 2 === 0 ? "slide-delay-1" : "slide-delay-2"}
+          />
+        ))}
 
-        <section className="mx-auto max-w-7xl px-4 py-16">
-          <div className="mb-8 flex items-end justify-between gap-4">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.28em] text-cyan-300/80">
-                Build flow
-              </p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">
-                From package to marketplace listing
-              </h2>
-            </div>
-            <Link href="/marketplace" className="font-mono text-sm text-cyan-300 hover:text-cyan-100">
-              Open the market →
-            </Link>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-4">
-            <StepCard step="01" title="Package" text="Creator bundle contains `agent.md`, `agent.yaml`, examples, and optional tool code." />
-            <StepCard step="02" title="Register" text="Backend validates package shape and syncs metadata into the AgentHub registry." />
-            <StepCard step="03" title="List" text="Marketplace renders curated live agents plus display-only concept listings." />
-            <StepCard step="04" title="Invoke" text="Another assistant or human copies the instruction block and hits the execution endpoint." />
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 pb-20">
+        <section className="mx-auto max-w-7xl px-4 py-18">
           <div className="neon-frame rounded-[34px] bg-[#090312]/92 p-7">
             <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
               <div>
                 <p className="font-mono text-xs uppercase tracking-[0.28em] text-fuchsia-300/80">
-                  Dev kit
+                  Live right now
                 </p>
                 <h2 className="mt-3 text-3xl font-semibold text-white">
-                  Built for founders, infra nerds, and agent tinkerers.
+                  Two working specialists, one shared platform runtime.
                 </h2>
                 <p className="mt-4 max-w-2xl leading-8 text-zinc-300">
-                  The homepage is intentionally long-form because the landing
-                  page needs to explain the product thesis, not just dump users
-                  into cards. This is the “why”, the “how”, and the “show me the
-                  goods” layer for a technical audience.
+                  The Legal Document Concern Checker proves the prompt-only path.
+                  The Clause Extractor Assistant proves the prompt-plus-tool path.
+                  Together they show the core marketplace claim: AgentHub can
+                  host packaged specialists and execute them under platform control.
                 </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link href="/agents/legal-checker">
+                    <Button className="border border-cyan-400/35 bg-cyan-400/10 font-mono text-cyan-100 hover:bg-cyan-400/18">
+                      Open legal-checker
+                    </Button>
+                  </Link>
+                  <Link href="/agents/clause-extractor">
+                    <Button className="border border-fuchsia-400/35 bg-fuchsia-500/10 font-mono text-fuchsia-100 hover:bg-fuchsia-500/18">
+                      Open clause-extractor
+                    </Button>
+                  </Link>
+                </div>
               </div>
               <div className="rounded-[28px] border border-white/10 bg-black/30 p-5">
                 <div className="mb-4 flex items-center gap-2 text-cyan-300">
-                  <TerminalSquare className="h-4 w-4" />
+                  <Radar className="h-4 w-4" />
                   <span className="font-mono text-xs uppercase tracking-[0.24em]">
-                    Quick links
+                    Operator notes
                   </span>
                 </div>
-                <div className="space-y-3 font-mono text-sm">
-                  <QuickLink href="/marketplace" label="Marketplace listings" />
-                  <QuickLink href="/agents/legal-checker" label="Live agent: legal-checker" />
-                  <QuickLink href="/agents/clause-extractor" label="Live agent: clause-extractor" />
-                  <QuickLink href="/creator/publish" label="Visual-only create agent page" />
+                <div className="space-y-3 text-sm text-zinc-300">
+                  <OperatorRow
+                    label="Goal"
+                    value="Let users invoke specialist agents without trusting creator infrastructure."
+                  />
+                  <OperatorRow
+                    label="Boundary"
+                    value="AgentHub-managed infrastructure is the trust boundary."
+                  />
+                  <OperatorRow
+                    label="UX"
+                    value="Browse listings, inspect metadata, test live, copy delegation instructions."
+                  />
+                  <OperatorRow
+                    label="Repo"
+                    value="Open source MVP implementation available in the linked repository."
+                  />
                 </div>
               </div>
             </div>
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function NarrativeSection({
+  eyebrow,
+  title,
+  body,
+  bullets,
+  direction,
+  visual,
+  delayClass,
+}: {
+  eyebrow: string;
+  title: string;
+  body: string;
+  bullets: string[];
+  direction: "left" | "right";
+  visual: "threat" | "secure" | "market";
+  delayClass: string;
+}) {
+  const textClass = direction === "left" ? "slide-in-left" : "slide-in-right";
+  const visualClass = direction === "left" ? "slide-in-right" : "slide-in-left";
+
+  return (
+    <section className="border-t border-white/6">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-18 lg:grid-cols-2 lg:items-center">
+        <div className={`${textClass} ${delayClass} ${direction === "right" ? "lg:order-2" : ""}`}>
+          <p className="font-mono text-xs uppercase tracking-[0.28em] text-cyan-300/80">
+            {eyebrow}
+          </p>
+          <h2 className="mt-3 max-w-2xl text-3xl font-semibold text-white md:text-4xl">
+            {title}
+          </h2>
+          <p className="mt-5 max-w-2xl leading-8 text-zinc-300">{body}</p>
+          <div className="mt-6 space-y-3">
+            {bullets.map((bullet) => (
+              <div
+                key={bullet}
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
+                <p className="text-sm leading-7 text-zinc-300">{bullet}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className={`${visualClass} ${delayClass} ${direction === "right" ? "lg:order-1" : ""}`}>
+          <InfographicPanel visual={visual} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function InfographicPanel({
+  visual,
+}: {
+  visual: "threat" | "secure" | "market";
+}) {
+  if (visual === "threat") {
+    return (
+      <div className="neon-frame rounded-[32px] bg-[#090312]/92 p-6">
+        <p className="font-mono text-xs uppercase tracking-[0.28em] text-rose-300/80">
+          Threat model
+        </p>
+        <div className="mt-5 space-y-3">
+          <Node tone="rose" label="random dev laptop" />
+          <Node tone="rose" label="opaque third-party server" />
+          <Node tone="rose" label="arbitrary network calls" />
+          <Node tone="rose" label="hidden retention practices" />
+        </div>
+      </div>
+    );
+  }
+
+  if (visual === "secure") {
+    return (
+      <div className="neon-frame rounded-[32px] bg-[#090312]/92 p-6">
+        <p className="font-mono text-xs uppercase tracking-[0.28em] text-emerald-300/80">
+          Secure execution context
+        </p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Node tone="emerald" label="isolated runtime" />
+          <Node tone="emerald" label="platform-mediated model use" />
+          <Node tone="emerald" label="default deny network" />
+          <Node tone="emerald" label="scoped invocation data" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="neon-frame rounded-[32px] bg-[#090312]/92 p-6">
+      <p className="font-mono text-xs uppercase tracking-[0.28em] text-cyan-300/80">
+        Marketplace flow
+      </p>
+      <div className="mt-5 space-y-3">
+        <FlowRow icon={<Shield className="h-4 w-4" />} title="Discover" subtitle="browse specialist agents" />
+        <FlowRow icon={<Cpu className="h-4 w-4" />} title="Delegate" subtitle="choose the right expert" />
+        <FlowRow icon={<Sparkles className="h-4 w-4" />} title="Execute" subtitle="run inside AgentHub" />
+        <FlowRow icon={<Workflow className="h-4 w-4" />} title="Return" subtitle="get result with clear execution boundary" />
+      </div>
+    </div>
+  );
+}
+
+function Node({
+  tone,
+  label,
+}: {
+  tone: "rose" | "emerald";
+  label: string;
+}) {
+  const classes =
+    tone === "rose"
+      ? "border-rose-400/25 bg-rose-500/10 text-rose-100"
+      : "border-emerald-400/25 bg-emerald-500/10 text-emerald-100";
+
+  return (
+    <div className={`rounded-2xl border px-4 py-4 font-mono text-sm ${classes}`}>
+      {label}
+    </div>
+  );
+}
+
+function FlowRow({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+      <div className="text-cyan-300">{icon}</div>
+      <div>
+        <p className="text-sm text-white">{title}</p>
+        <p className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+          {subtitle}
+        </p>
+      </div>
     </div>
   );
 }
@@ -218,21 +407,21 @@ function TerminalLine({
   );
 }
 
-function NeonStat({
+function SignalStat({
   label,
   value,
-  accent,
+  color,
 }: {
   label: string;
   value: string;
-  accent: "cyan" | "pink" | "amber" | "emerald";
+  color: "cyan" | "pink" | "amber" | "emerald";
 }) {
   const accentClass =
-    accent === "cyan"
+    color === "cyan"
       ? "border-cyan-400/25 text-cyan-200"
-      : accent === "pink"
+      : color === "pink"
         ? "border-fuchsia-400/25 text-fuchsia-200"
-        : accent === "amber"
+        : color === "amber"
           ? "border-amber-400/25 text-amber-200"
           : "border-emerald-400/25 text-emerald-200";
 
@@ -246,80 +435,19 @@ function NeonStat({
   );
 }
 
-function StoryCard({
-  icon,
-  title,
-  text,
+function OperatorRow({
+  label,
+  value,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  text: string;
+  label: string;
+  value: string;
 }) {
   return (
-    <div className="neon-frame rounded-[28px] bg-[#090312]/92 p-6">
-      <div className="mb-4 inline-flex rounded-2xl border border-white/10 bg-white/5 p-3">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 leading-7 text-zinc-300">{text}</p>
-    </div>
-  );
-}
-
-function Cutout({
-  eyebrow,
-  title,
-  body,
-  accent,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  accent: "cyan" | "pink";
-}) {
-  const accentClass =
-    accent === "cyan"
-      ? "border-cyan-400/20 shadow-[0_0_30px_rgba(34,211,238,0.08)]"
-      : "border-fuchsia-400/20 shadow-[0_0_30px_rgba(232,121,249,0.08)]";
-
-  return (
-    <div className={`rounded-[30px] border bg-white/5 p-6 ${accentClass}`}>
-      <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">
-        {eyebrow}
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+      <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">
+        {label}
       </p>
-      <h3 className="mt-3 text-2xl font-semibold text-white">{title}</h3>
-      <p className="mt-4 leading-8 text-zinc-300">{body}</p>
+      <p className="mt-2 leading-7 text-zinc-200">{value}</p>
     </div>
-  );
-}
-
-function StepCard({
-  step,
-  title,
-  text,
-}: {
-  step: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="rounded-[26px] border border-white/10 bg-white/5 p-5">
-      <p className="font-mono text-xs uppercase tracking-[0.24em] text-zinc-500">
-        {step}
-      </p>
-      <h3 className="mt-3 text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-3 leading-7 text-zinc-300">{text}</p>
-    </div>
-  );
-}
-
-function QuickLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-zinc-200 hover:border-cyan-400/25 hover:text-white"
-    >
-      {label}
-    </Link>
   );
 }
