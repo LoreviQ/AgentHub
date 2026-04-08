@@ -841,22 +841,35 @@ Exit criteria:
 ### Step 7: Build The Demo Website
 
 Deliverables:
+- home page. long scrollable page style with cutouts explaining what it is and why, etc. Dev focused inclusions like link to git repo, etc
+- marketplace page, list of agents
+  - Includes both demo agents fetched via api
+  - Includes several other agents for display purposes only. Loaded directly inside the frontend and tagged as display only to make the list look fuller
+- agent detail page (per agent)
+  - lists all the details of an agent in a user focused manner. What it does, how, how to use, etc
+  - A chat panel to live test the agent with an example prompt customised for the agent to pass it (the user can change this)
+  - copy command button. Copies a block of text that users can add to their own personal assistant agent explaining why/how to use this agent (endpoint stubbed for now since backend is not userfacing)
+  - example request and response sections
+  - reviews / cost / etc
+- Create agent page (visual only, non functional)
 
-- home page
-- agent detail pages
-- copy command block
-- example request and response sections
+Style:
+- Cyberpunky / dev / web3
+- high contrast, dark bg, colorful borders, animations, nerd culture, monospaced font, etc
+- Consistent but strong color scheme
+- Smooth, stylish and fun!
 
 Work:
-
 - fetch agent metadata from backend
 - render agent cards
 - implement clipboard copy action
 - present clear usage instructions
 
 Exit criteria:
+- a user can browse the webpage, see both agents, interact with them through the website and copy invocation instructions
+- Dockrfile and docker compose setup for frontend
 
-- a user can browse the two agents and copy invocation instructions
+Use /frontend as inspiration but do not feel limited to choices made. It was a quick non functional mockup and should not restrict design identiy. 
 
 ### Step 8: Deploy To Hetzner
 

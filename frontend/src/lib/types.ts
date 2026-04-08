@@ -2,6 +2,55 @@ export type PermissionRisk = "low" | "medium" | "high";
 export type TrustLevel = "community" | "verified" | "enterprise";
 export type PriceModel = "per_run" | "subscription" | "usage";
 
+export type AgentListItem = {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  model_provider: string;
+  model_name: string;
+  input_mode: string;
+  output_mode: string;
+  tools_enabled: boolean;
+};
+
+export type AgentTool = {
+  name: string;
+  description: string;
+  image: string;
+  entrypoint: string;
+  input_format: string;
+  output_format: string;
+  timeout_seconds: number;
+};
+
+export type AgentDetail = AgentListItem & {
+  schema_version: number;
+  instructions_markdown: string;
+  public_instructions: string;
+  model_temperature: number;
+  model_max_tokens: number;
+  runtime_timeout_seconds: number;
+  runtime_internet_access: boolean;
+  runtime_execution_notes: string | null;
+  package_path: string;
+  example_input_path: string | null;
+  example_output_path: string | null;
+  example_input: string | null;
+  example_output: unknown | null;
+  example_output_raw: string | null;
+  tools: AgentTool[];
+};
+
+export type AgentExecutionResponse = {
+  run_id: number;
+  agent_id: string;
+  status: "completed";
+  output: unknown;
+  started_at: string;
+  completed_at: string;
+};
+
 export type AgentPermission = {
   id: string;
   name: string;

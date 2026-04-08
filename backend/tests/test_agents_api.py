@@ -126,12 +126,18 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
         assert agent["id"] == "legal-checker"
         assert agent["model_provider"] == "openrouter"
         assert agent["tools"] == []
+        assert agent["example_input"] is None
+        assert agent["example_output"] is None
+        assert agent["example_output_raw"] is None
 
         tool_detail = await client.get("/api/agents/clause-extractor")
         assert tool_detail.status_code == 200
         tool_agent = tool_detail.json()
         assert len(tool_agent["tools"]) == 1
         assert tool_agent["tools"][0]["name"] == "clause_extractor"
+        assert tool_agent["example_input"] is None
+        assert tool_agent["example_output"] is None
+        assert tool_agent["example_output_raw"] is None
 
         missing = await client.get("/api/agents/does-not-exist")
         assert missing.status_code == 404

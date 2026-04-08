@@ -1,4 +1,10 @@
-import type { Agent, Invocation } from "@/lib/types";
+import type {
+  Agent,
+  AgentDetail,
+  AgentExecutionResponse,
+  AgentListItem,
+  Invocation,
+} from "@/lib/types";
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -8,14 +14,19 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Request failed");
+    throw new Error(body.detail ?? body.error ?? "Request failed");
   }
   return res.json() as Promise<T>;
 }
 
 export const api = {
-  listAgents: (query: string) => jsonFetch<Agent[]>(`/api/agents?${query}`),
-  getAgent: (id: string) => jsonFetch<Agent>(`/api/agents/${id}`),
+  listAgents: () => jsonFetch<AgentListItem[]>("/api/agents"),
+  getAgent: (id: string) => jsonFetch<AgentDetail>(`/api/agents/${id}`),
+  executeAgent: (payload: { agentId: string; input: string }) =>
+    jsonFetch<AgentExecutionResponse>(`/api/agents/${payload.agentId}/execute`, {
+      method: "POST",
+      body: JSON.stringify({ input: payload.input }),
+    }),
   publishAgent: (payload: unknown) =>
     jsonFetch<Agent>("/api/agents", { method: "POST", body: JSON.stringify(payload) }),
   validatePackage: (payload: unknown) =>

@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -43,4 +45,7 @@ class AgentDetailResponse(BaseModel):
     package_path: str
     example_input_path: str | None
     example_output_path: str | None
+    example_input: str | None
+    example_output: Any | None
+    example_output_raw: str | None
     tools: list[AgentToolResponse]

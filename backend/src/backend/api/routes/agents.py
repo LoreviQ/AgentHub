@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,6 +16,28 @@ from backend.schemas.execution import AgentExecuteRequest, AgentExecuteResponse
 from backend.services.execution import AgentExecutionError, execute_agent
 
 router = APIRouter(tags=["agents"])
+
+
+def _read_optional_text(path_value: str | None) -> str | None:
+    if not path_value:
+        return None
+
+    path = Path(path_value)
+    if not path.exists() or not path.is_file():
+        return None
+
+    return path.read_text(encoding="utf-8")
+
+
+def _read_optional_json(path_value: str | None) -> tuple[Any | None, str | None]:
+    raw = _read_optional_text(path_value)
+    if raw is None:
+        return None, None
+
+    try:
+        return json.loads(raw), raw
+    except json.JSONDecodeError:
+        return None, raw
 
 
 @router.get("/agents", response_model=list[AgentListItemResponse])
@@ -45,6 +71,10 @@ async def get_agent(agent_id: str) -> AgentDetailResponse:
         if record is None:
             raise HTTPException(status_code=404, detail="Agent not found")
 
+        example_output, example_output_raw = _read_optional_json(
+            record.example_output_path
+        )
+
         return AgentDetailResponse(
             id=record.slug,
             name=record.name,
@@ -65,6 +95,9 @@ async def get_agent(agent_id: str) -> AgentDetailResponse:
             package_path=record.package_path,
             example_input_path=record.example_input_path,
             example_output_path=record.example_output_path,
+            example_input=_read_optional_text(record.example_input_path),
+            example_output=example_output,
+            example_output_raw=example_output_raw,
             tools=[
                 AgentToolResponse(
                     name=tool.name,
