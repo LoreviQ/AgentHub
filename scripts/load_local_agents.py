@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -103,7 +104,13 @@ def load_agent_packages(agents_dir: Path, schema_path: Path) -> list[SeedAgentRe
                     SeedAgentTool(
                         name=tool.name,
                         description=tool.description,
-                        image=tool.image,
+                        image=build_tool_image(
+                            agent_dir=directory,
+                            agent_id=config.id,
+                            agent_version=config.version,
+                            tool_name=tool.name,
+                            declared_image=tool.image,
+                        ),
                         entrypoint=tool.entrypoint,
                         input_format=tool.input_format,
                         output_format=tool.output_format,
@@ -122,6 +129,63 @@ def _optional_file(*paths: Path) -> str | None:
         if path.exists():
             return str(path)
     return None
+
+
+def build_tool_image(
+    *,
+    agent_dir: Path,
+    agent_id: str,
+    agent_version: str,
+    tool_name: str,
+    declared_image: str,
+) -> str:
+    build_dir = _resolve_tool_build_dir(agent_dir=agent_dir, tool_name=tool_name)
+    if build_dir is None:
+        return declared_image
+
+    runtime_image = _runtime_tool_image_tag(
+        agent_id=agent_id,
+        agent_version=agent_version,
+        tool_name=tool_name,
+    )
+
+    try:
+        subprocess.run(
+            ["docker", "build", "-t", runtime_image, str(build_dir)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise RegistryValidationError(
+            "Docker is required to build packaged tool images during agent loading."
+        ) from exc
+    except subprocess.CalledProcessError as exc:
+        output = (exc.stderr or exc.stdout or "").strip()
+        raise RegistryValidationError(
+            f"Failed to build tool image for '{agent_id}/{tool_name}': {output}"
+        ) from exc
+
+    return runtime_image
+
+
+def _resolve_tool_build_dir(*, agent_dir: Path, tool_name: str) -> Path | None:
+    candidates = [
+        agent_dir / "tools" / tool_name,
+        agent_dir / "tool",
+    ]
+    for candidate in candidates:
+        if (candidate / "Dockerfile").exists():
+            return candidate
+    return None
+
+
+def _runtime_tool_image_tag(
+    *, agent_id: str, agent_version: str, tool_name: str
+) -> str:
+    normalized_agent_id = agent_id.replace("_", "-")
+    normalized_tool_name = tool_name.replace("_", "-")
+    return f"agenthub-local/{normalized_agent_id}-{normalized_tool_name}:{agent_version}"
 
 
 if __name__ == "__main__":
