@@ -5,7 +5,6 @@ from fastapi import FastAPI
 
 from backend.api.routes.agents import router as agents_router
 from backend.core.config import get_settings
-from backend.db.base import Base
 from backend.db.session import get_engine
 from backend.services.registry import sync_registry
 
@@ -14,7 +13,6 @@ from backend.services.registry import sync_registry
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
     engine = get_engine()
-    Base.metadata.create_all(bind=engine)
     sync_registry(engine=engine, settings=settings)
     yield
 

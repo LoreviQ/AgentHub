@@ -1,12 +1,17 @@
 from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from backend.core.config import get_settings
-from backend.db.base import Base
 from backend.db.session import get_engine, reset_database_state
-from backend.main import create_app
 from backend.services.registry import sync_registry
 from httpx import ASGITransport, AsyncClient
+
+
+def _run_migrations() -> None:
+    alembic_config = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    command.upgrade(alembic_config, "head")
 
 
 @pytest.mark.anyio
@@ -17,9 +22,11 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
     get_settings.cache_clear()
     settings = get_settings()
 
+    _run_migrations()
     engine = get_engine()
-    Base.metadata.create_all(bind=engine)
     sync_registry(engine=engine, settings=settings)
+
+    from backend.main import create_app
 
     app = create_app()
 

@@ -14,6 +14,7 @@ docker compose up -d
 
 ```bash
 cd /home/lore/workspace/AgentHub/backend
+UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
 UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run uvicorn backend.main:app --app-dir src --reload
 ```
 
@@ -25,3 +26,5 @@ UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
 ```
 
 The app reads values from the process environment only. Use `backend/.env.example` as the documented template, and let your execution context load `backend/.env.local` when needed, such as VS Code `envFile` or Docker Compose.
+
+The backend no longer creates tables on startup. Run `alembic upgrade head` before starting the API so schema changes always flow through migrations.
