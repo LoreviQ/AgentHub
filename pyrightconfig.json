@@ -1,0 +1,32 @@
+{
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.venv",
+    "**/alembic",
+    "**/typings"
+  ],
+
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "standard",
+
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "extraPaths": [
+        "backend/src"
+      ],
+    }
+
+    // Add more projects here later:
+    // ,
+    // {
+    //   "root": "worker",
+    //   "include": ["worker/src", "worker/tests"],
+    //   "extraPaths": ["worker/src"],
+    //   "stubPath": "worker/typings",
+    //   "venv": ".venv",
+    //   "venvPath": "worker"
+    // }
+  ]
+}

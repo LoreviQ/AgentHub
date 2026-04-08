@@ -1,0 +1,31 @@
+# AgentHub API smoke tests for the VS Code REST Client extension.
+# Start the backend with the "Backend API (.env.local)" launch profile first.
+
+@host = http://127.0.0.1:8000
+@api = {{host}}/api
+@agentId = legal-checker
+
+###
+# Health check
+GET {{host}}/health
+Accept: application/json
+
+###
+# List registered agents
+GET {{api}}/agents
+Accept: application/json
+
+###
+# Get one known agent
+GET {{api}}/agents/{{agentId}}
+Accept: application/json
+
+###
+# Get the tool-enabled agent
+GET {{api}}/agents/clause-extractor
+Accept: application/json
+
+###
+# Not found case
+GET {{api}}/agents/does-not-exist
+Accept: application/json

@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Backend API (.env.local)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "backend.main:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "8000",
+                "--reload",
+                "--app-dir",
+                "src"
+            ],
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/backend/.env.local",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend/src",
+                "UV_CACHE_DIR": "/tmp/uv-cache"
+            },
+            "justMyCode": true
+        }
+    ]
+}
