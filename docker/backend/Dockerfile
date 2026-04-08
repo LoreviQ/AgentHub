@@ -24,6 +24,7 @@ ENV PATH=/opt/venv/bin:$PATH
 WORKDIR /app/backend
 
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=docker:28-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY backend/alembic.ini ./alembic.ini
 COPY backend/alembic ./alembic
 COPY scripts /app/scripts

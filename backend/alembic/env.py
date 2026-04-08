@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 from pathlib import Path
 
@@ -11,19 +12,21 @@ config = context.config
 
 x_args = context.get_x_argument(as_dictionary=True)
 env_file = x_args.get("env")
-if not env_file:
-    raise RuntimeError(
-        "Missing Alembic env file. Run with: alembic -x env=.env upgrade head"
-    )
+database_url = os.environ.get("AGENTHUB_DATABASE_URL")
 
-env_path = Path(env_file).expanduser().resolve()
-if not env_path.is_file():
-    raise RuntimeError(f"Env file not found: {env_path}")
+if env_file:
+    env_path = Path(env_file).expanduser().resolve()
+    if not env_path.is_file():
+        raise RuntimeError(f"Env file not found: {env_path}")
 
-env = dotenv_values(env_path)
-database_url = env.get("AGENTHUB_DATABASE_URL")
+    env = dotenv_values(env_path)
+    database_url = env.get("AGENTHUB_DATABASE_URL") or database_url
+
 if not database_url:
-    raise RuntimeError(f"AGENTHUB_DATABASE_URL is not set in env file: {env_path}")
+    raise RuntimeError(
+        "AGENTHUB_DATABASE_URL is not set. Run with process env or use "
+        "alembic -x env=.env.local upgrade head."
+    )
 
 config.set_main_option("sqlalchemy.url", database_url)
 
