@@ -1,3 +1,4 @@
+import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -5,7 +6,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from backend.core.config import get_settings
-from backend.db.models import AgentRunRecord
+from backend.db.models import AgentRunRecord, AgentToolRecord
 from backend.db.session import get_engine, reset_database_state
 from backend.services.execution import AgentExecutionResult
 from backend.services.registry import SeedAgentRecord, SeedAgentTool, sync_registry
@@ -159,7 +160,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
     engine = get_engine()
     sync_registry(engine=engine, agents=_seed_example_agents())
 
-    from backend import main
+    from backend.main import create_app
     from backend.services import execution
 
     class FakeProvider:
@@ -172,6 +173,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
             temperature: float,
             max_tokens: int,
             output_mode: str,
+            tools,
         ) -> AgentExecutionResult:
             assert "Legal Document Concern Checker" in system_prompt
             assert user_input == "This agreement renews automatically every year."
@@ -179,6 +181,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
             assert temperature == pytest.approx(0.2)
             assert max_tokens == 1800
             assert output_mode == "markdown"
+            assert tools == []
             return AgentExecutionResult(output="## Summary\nAuto-renewal needs review.")
 
     monkeypatch.setattr(
@@ -186,7 +189,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
         "get_provider",
         lambda *, provider_name: FakeProvider(),
     )
-    app = main.create_app()
+    app = create_app()
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -209,12 +212,57 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
             "input": "This agreement renews automatically every year."
         }
         assert runs[0].output_payload == {
-            "output": "## Summary\nAuto-renewal needs review."
+            "output": "## Summary\nAuto-renewal needs review.",
+            "tool_calls": [],
         }
 
 
+def test_normalize_openrouter_model_name() -> None:
+    from backend.services.execution import _normalize_openrouter_model_name
+
+    assert _normalize_openrouter_model_name("gpt-5-mini") == "openai/gpt-5-mini"
+    assert (
+        _normalize_openrouter_model_name("anthropic/claude-sonnet-4")
+        == "anthropic/claude-sonnet-4"
+    )
+
+
+def test_load_agent_packages_builds_local_tool_images(tmp_path: Path) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "load_local_agents",
+        repo_root / "scripts" / "load_local_agents.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    built_images: list[tuple[str, str, str]] = []
+
+    def fake_build_tool_image(
+        *,
+        agent_dir: Path,
+        agent_id: str,
+        agent_version: str,
+        tool_name: str,
+        declared_image: str,
+    ) -> str:
+        built_images.append((agent_id, agent_version, tool_name))
+        return f"agenthub-local/{agent_id}-{tool_name}:{agent_version}"
+
+    module.build_tool_image = fake_build_tool_image
+    packages = module.load_agent_packages(
+        repo_root / "agents",
+        repo_root / "schemas" / "agent.schema.json",
+    )
+
+    clause_extractor = next(package for package in packages if package.slug == "clause-extractor")
+    assert built_images == [("clause-extractor", "0.1.0", "clause_extractor")]
+    assert clause_extractor.tools[0].image == "agenthub-local/clause-extractor-clause_extractor:0.1.0"
+
+
 @pytest.mark.anyio
-async def test_execute_tool_enabled_agent_returns_not_implemented(
+async def test_execute_tool_enabled_agent_runs_registered_tool(
     tmp_path: Path, monkeypatch
 ) -> None:
     db_path = tmp_path / "test.db"
@@ -226,6 +274,64 @@ async def test_execute_tool_enabled_agent_returns_not_implemented(
     sync_registry(engine=engine, agents=_seed_example_agents())
 
     from backend.main import create_app
+    from backend.services import execution
+
+    class FakeToolExecutor:
+        async def execute(
+            self,
+            *,
+            tool: AgentToolRecord,
+            payload: dict[str, object],
+            internet_access: bool,
+        ) -> object:
+            assert tool.name == "clause_extractor"
+            assert tool.image == "agenthub/clause-tools:0.1.0"
+            assert payload == {
+                "text": "Confidentiality and termination terms appear below."
+            }
+            assert internet_access is False
+            return {
+                "clauses": [
+                    {"type": "confidentiality"},
+                    {"type": "termination"},
+                ],
+                "tool_version": "0.1.0",
+            }
+
+    class FakeProvider:
+        async def generate(
+            self,
+            *,
+            system_prompt: str,
+            user_input: str,
+            model_name: str,
+            temperature: float,
+            max_tokens: int,
+            output_mode: str,
+            tools,
+        ) -> AgentExecutionResult:
+            assert "Clause Extractor Assistant" in system_prompt
+            assert user_input == "Confidentiality and termination terms appear below."
+            assert model_name == "openai/gpt-5-mini"
+            assert temperature == pytest.approx(0.1)
+            assert max_tokens == 1800
+            assert output_mode == "json"
+            assert len(tools) == 1
+            tool_output = await tools[0].invoke({"text": user_input})
+            return AgentExecutionResult(
+                output={
+                    "clauses": tool_output["clauses"],
+                    "explanation": "Used the registered extraction tool.",
+                }
+            )
+
+    fake_executor = FakeToolExecutor()
+    monkeypatch.setattr(
+        execution,
+        "get_provider",
+        lambda *, provider_name: FakeProvider(),
+    )
+    monkeypatch.setattr(execution, "DockerToolExecutor", lambda: fake_executor)
 
     app = create_app()
     transport = ASGITransport(app=app)
@@ -235,15 +341,44 @@ async def test_execute_tool_enabled_agent_returns_not_implemented(
             json={"input": "Confidentiality and termination terms appear below."},
         )
 
-    assert response.status_code == 501
-    assert "Tool-enabled agents" in response.json()["detail"]
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["agent_id"] == "clause-extractor"
+    assert payload["status"] == "completed"
+    assert payload["output"] == {
+        "clauses": [
+            {"type": "confidentiality"},
+            {"type": "termination"},
+        ],
+        "explanation": "Used the registered extraction tool.",
+    }
 
-
-def test_normalize_openrouter_model_name() -> None:
-    from backend.services.execution import _normalize_openrouter_model_name
-
-    assert _normalize_openrouter_model_name("gpt-5-mini") == "openai/gpt-5-mini"
-    assert (
-        _normalize_openrouter_model_name("anthropic/claude-sonnet-4")
-        == "anthropic/claude-sonnet-4"
-    )
+    with Session(engine) as session:
+        runs = session.query(AgentRunRecord).all()
+        assert len(runs) == 1
+        assert runs[0].status == "completed"
+        assert runs[0].output_payload == {
+            "output": {
+                "clauses": [
+                    {"type": "confidentiality"},
+                    {"type": "termination"},
+                ],
+                "explanation": "Used the registered extraction tool.",
+            },
+            "tool_calls": [
+                {
+                    "tool_name": "clause_extractor",
+                    "image": "agenthub/clause-tools:0.1.0",
+                    "input": {
+                        "text": "Confidentiality and termination terms appear below."
+                    },
+                    "output": {
+                        "clauses": [
+                            {"type": "confidentiality"},
+                            {"type": "termination"},
+                        ],
+                        "tool_version": "0.1.0",
+                    },
+                }
+            ],
+        }
