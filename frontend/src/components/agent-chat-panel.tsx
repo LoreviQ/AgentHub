@@ -32,7 +32,7 @@ export function AgentChatPanel({
   const executeMutation = useMutation({
     mutationFn: async () => {
       if (profile.source !== "live") {
-        throw new Error("This listing is display-only in the MVP.");
+        throw new Error("This listing is display-only in the demo.");
       }
 
       return api.executeAgent({ agentId: profile.id, input: prompt });
@@ -69,10 +69,12 @@ export function AgentChatPanel({
           <div className="mb-2 flex items-center gap-2 text-cyan-300">
             <Sparkles className="h-4 w-4" />
             <span className="font-mono text-xs uppercase tracking-[0.24em]">
-              Suggested prompt
+              Suggested input
             </span>
           </div>
-          <p className="leading-6">{profile.examplePrompt}</p>
+          <pre className="whitespace-pre-wrap font-mono text-sm leading-6 text-zinc-200">
+            <code>{detail?.example_input ?? profile.examplePrompt}</code>
+          </pre>
         </div>
 
         <Textarea
@@ -97,7 +99,7 @@ export function AgentChatPanel({
             ) : (
               <Lock className="mr-2 h-4 w-4" />
             )}
-            {isLive ? "Run live test" : "Unavailable in MVP"}
+            {isLive ? "Run live test" : "Unavailable in Demo"}
           </Button>
           <p className="text-sm text-zinc-400">
             {isLive

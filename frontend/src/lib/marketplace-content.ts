@@ -60,11 +60,11 @@ const liveProfileSeeds: Record<string, LiveProfileSeed> = {
     description:
       "Reads contract or policy text and flags the clauses a human should inspect before signature.",
     longDescription:
-      "This agent is tuned for quick first-pass contract review. It is meant to surface the parts of a document that deserve human follow-up, not to replace legal advice. For the marketplace MVP, this is one of the two real packaged agents that can be executed live through the shared AgentHub runtime.",
+      "This agent is tuned for quick first-pass contract review. It is meant to surface the parts of a document that deserve human follow-up, not to replace legal advice. For the marketplace demo, this is one of the two real packaged agents that can be executed live through the shared AgentHub runtime.",
     categories: ["Legal", "Risk", "Founders"],
     owner: "AgentHub Core",
     creatorHandle: "@agenthub/legal-lab",
-    priceLabel: "MVP price",
+    priceLabel: "Demo price",
     priceValue: "$0.08 / run",
     costBlurb:
       "Low-cost LLM-only execution intended for lightweight legal triage flows.",
@@ -80,7 +80,7 @@ const liveProfileSeeds: Record<string, LiveProfileSeed> = {
       "Give another assistant a safe escalation target",
     ],
     examplePrompt:
-      "Review this SaaS agreement excerpt and tell me what deserves follow-up before signature.",
+      "This agreement renews automatically for successive 24-month terms unless either party gives notice at least 90 days before renewal. The customer may not terminate for convenience. Vendor liability is capped at fees paid in the prior one month, including for confidentiality breaches. Vendor may change subprocessors at any time by updating its website.",
     whyThisExists:
       "Contract review is easy to explain in a demo and clearly shows why curated specialist agents are useful.",
     howItWorks: [
@@ -118,7 +118,7 @@ const liveProfileSeeds: Record<string, LiveProfileSeed> = {
     categories: ["Legal", "Extraction", "Structured Data"],
     owner: "AgentHub Core",
     creatorHandle: "@agenthub/extraction-lab",
-    priceLabel: "MVP price",
+    priceLabel: "Demo price",
     priceValue: "$0.14 / run",
     costBlurb:
       "Slightly higher due to structured output handling and optional one-shot tool invocation.",
@@ -134,7 +134,7 @@ const liveProfileSeeds: Record<string, LiveProfileSeed> = {
       "Show selective tool use inside a curated runtime",
     ],
     examplePrompt:
-      "Extract the key clauses from this agreement excerpt and return them as structured JSON.",
+      "Customer may terminate for material breach if the vendor fails to cure within 30 days of written notice. The agreement renews automatically for one-year terms unless either party gives 60 days' notice. Vendor may process customer data using approved subprocessors listed in Annex B.",
     whyThisExists:
       "It proves that one marketplace can host agents with different execution shapes while preserving a single platform runtime.",
     howItWorks: [
@@ -340,7 +340,7 @@ export function buildLiveMarketplaceProfile(
     ...seed,
     slug: agent.id,
     source: "live",
-    statusLabel: "Live in MVP",
+    statusLabel: "Live in Demo",
     sampleRequestBody: { input: exampleInput },
     sampleResponse: exampleOutput,
     outputSummary: `${agent.output_mode} output via ${agent.model_provider}/${agent.model_name}`,
@@ -357,4 +357,3 @@ export function getCatalogAgentIds(): string[] {
     ...displayOnlyAgents.map((agent) => agent.id),
   ];
 }
-
