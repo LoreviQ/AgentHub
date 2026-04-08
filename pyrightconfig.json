@@ -13,16 +13,9 @@
   "executionEnvironments": [
     {
       "root": "backend",
-      "include": [
-        "backend/src",
-        "backend/tests"
-      ],
       "extraPaths": [
         "backend/src"
       ],
-      "stubPath": "backend/typings",
-      "venv": ".venv",
-      "venvPath": "backend"
     }
 
     // Add more projects here later:
