@@ -6,7 +6,7 @@ FastAPI backend for the AgentHub MVP.
 
 ```bash
 cd /home/lore/workspace/AgentHub/backend
-cp .env.example .env
+cp .env.example .env.local
 docker compose up -d
 ```
 
@@ -24,4 +24,4 @@ cd /home/lore/workspace/AgentHub/backend
 UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
 ```
 
-The app defaults to PostgreSQL for local and deployed environments. Override `AGENTHUB_DATABASE_URL` only when you intentionally want a different database, such as SQLite in tests.
+The app reads values from the process environment only. Use `backend/.env.example` as the documented template, and let your execution context load `backend/.env.local` when needed, such as VS Code `envFile` or Docker Compose.
