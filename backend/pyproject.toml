@@ -1,7 +1,7 @@
 [project]
 name = "backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI backend for the AgentHub MVP registry and execution APIs"
 readme = "README.md"
 authors = [
     { name = "Oliver Jay", email = "oliver.tj@oliver.tj" }
@@ -20,6 +20,9 @@ dependencies = [
 
 [project.scripts]
 backend = "backend:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
 
 [build-system]
 requires = ["uv_build>=0.11.4,<0.12.0"]

@@ -1,2 +1,5 @@
 .venv
 .codex
+__pycache__
+.pytest_cache
+*.db

@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from backend!")
+from backend.cli import main
+
+__all__ = ["main"]
