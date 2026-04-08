@@ -36,6 +36,17 @@ Content-Type: application/json
 }
 
 ###
+# Execute the tool-enabled agent
+POST {{api}}/agents/clause-extractor/execute
+Accept: application/json
+Content-Type: application/json
+
+{
+  "input": "The agreement automatically renews for successive one-year terms unless either party gives 30 days notice before renewal. Either party may terminate for material breach if the breach is not cured within 15 days. Each party must keep confidential information secret and may disclose it only as required by law. Vendor liability is limited to the fees paid under this agreement during the prior 12 months."
+}
+
+
+###
 # Not found case
 GET {{api}}/agents/does-not-exist
 Accept: application/json
