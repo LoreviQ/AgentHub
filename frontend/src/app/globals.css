@@ -139,28 +139,17 @@ button {
 }
 
 .typing-line {
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   white-space: nowrap;
   overflow: hidden;
   width: 0;
   color: #38bdf8;
   text-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
-  animation: typing-reveal 2.6s steps(35, end) 320ms forwards;
-}
-
-.typing-line__text {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.typing-line__cursor {
-  display: inline-block;
-  margin-left: 0.02em;
-  color: #7dd3fc;
-  text-shadow: none;
-  opacity: 1;
-  animation: blink-cursor 1s linear infinite;
+  border-right: 0.08em solid #7dd3fc;
+  padding-right: 0.04em;
+  animation:
+    typing-reveal 2.6s steps(35, end) 320ms forwards,
+    blink-cursor 1s linear infinite;
 }
 
 @keyframes float-slow {
@@ -221,11 +210,11 @@ button {
 @keyframes blink-cursor {
   0%,
   45% {
-    opacity: 1;
+    border-right-color: #7dd3fc;
   }
   46%,
   100% {
-    opacity: 0;
+    border-right-color: transparent;
   }
 }
 

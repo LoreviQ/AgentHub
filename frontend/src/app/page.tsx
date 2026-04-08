@@ -76,10 +76,7 @@ export default function Home() {
               <h1 className="mt-6 flex max-w-6xl flex-col items-start gap-2 text-5xl font-semibold tracking-tight text-white md:text-7xl">
                 <span>Discover specialist agents.</span>
                 <span className="typing-line text-[0.82em] md:text-[0.8em]">
-                  <span className="typing-line__text">
-                    Execute them in a secure context.
-                  </span>
-                  <span className="typing-line__cursor">_</span>
+                  Execute them in a secure context.
                 </span>
               </h1>
               <p className="mt-6 max-w-3xl text-lg leading-8 text-zinc-300">
