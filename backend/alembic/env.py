@@ -1,16 +1,31 @@
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
+from backend.db import models  # noqa: F401
+from backend.db.base import Base
+from dotenv import dotenv_values
 from sqlalchemy import engine_from_config, pool
 
-from backend.core.config import get_settings
-from backend.db.base import Base
-from backend.db import models  # noqa: F401
-
-
 config = context.config
-settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+
+x_args = context.get_x_argument(as_dictionary=True)
+env_file = x_args.get("env")
+if not env_file:
+    raise RuntimeError(
+        "Missing Alembic env file. Run with: alembic -x env=.env upgrade head"
+    )
+
+env_path = Path(env_file).expanduser().resolve()
+if not env_path.is_file():
+    raise RuntimeError(f"Env file not found: {env_path}")
+
+env = dotenv_values(env_path)
+database_url = env.get("AGENTHUB_DATABASE_URL")
+if not database_url:
+    raise RuntimeError(f"AGENTHUB_DATABASE_URL is not set in env file: {env_path}")
+
+config.set_main_option("sqlalchemy.url", database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
