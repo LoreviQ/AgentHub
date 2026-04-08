@@ -8,6 +8,8 @@ from backend.schemas.agent import (
     AgentListItemResponse,
     AgentToolResponse,
 )
+from backend.schemas.execution import AgentExecuteRequest, AgentExecuteResponse
+from backend.services.execution import AgentExecutionError, execute_agent
 
 router = APIRouter(tags=["agents"])
 
@@ -75,4 +77,39 @@ async def get_agent(agent_id: str) -> AgentDetailResponse:
                 )
                 for tool in record.tools
             ],
+        )
+
+
+@router.post("/agents/{agent_id}/execute", response_model=AgentExecuteResponse)
+async def execute_agent_route(
+    agent_id: str, request: AgentExecuteRequest
+) -> AgentExecuteResponse:
+    with Session(get_engine()) as session:
+        record = (
+            session.query(AgentRecord)
+            .filter(AgentRecord.slug == agent_id)
+            .one_or_none()
+        )
+        if record is None:
+            raise HTTPException(status_code=404, detail="Agent not found")
+
+        try:
+            run = await execute_agent(session=session, record=record, request=request)
+        except AgentExecutionError as exc:
+            message = str(exc)
+            status_code = 501 if "Tool-enabled agents" in message else 502
+            raise HTTPException(status_code=status_code, detail=message) from exc
+
+        if run.completed_at is None or run.output_payload is None:
+            raise HTTPException(
+                status_code=500, detail="Agent run completed without output"
+            )
+
+        return AgentExecuteResponse(
+            run_id=run.id,
+            agent_id=record.slug,
+            status="completed",
+            output=run.output_payload["output"],
+            started_at=run.started_at,
+            completed_at=run.completed_at,
         )

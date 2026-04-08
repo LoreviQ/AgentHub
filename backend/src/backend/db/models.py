@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    DateTime,
     Float,
     ForeignKey,
     Integer,
@@ -66,3 +68,24 @@ class AgentToolRecord(Base):
     timeout_seconds: Mapped[int] = mapped_column(Integer)
 
     agent: Mapped[AgentRecord] = relationship(back_populates="tools")
+
+
+class AgentRunRecord(Base):
+    __tablename__ = "agent_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    agent_id: Mapped[int] = mapped_column(
+        ForeignKey("agents.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    provider: Mapped[str] = mapped_column(String(255))
+    model_name: Mapped[str] = mapped_column(String(255))
+    input_payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+    output_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    agent: Mapped[AgentRecord] = relationship()

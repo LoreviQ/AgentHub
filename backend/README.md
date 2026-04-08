@@ -31,6 +31,7 @@ cd /home/lore/workspace/AgentHub/backend
 AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agenthub \
 UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
 
+OPENROUTER_API_KEY=sk-or-v1-... \
 AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agenthub \
 UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run uvicorn backend.main:app --app-dir src --reload
 ```
@@ -43,6 +44,8 @@ UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run alembic upgrade head
 ```
 
 The app reads values from the process environment only. Use `backend/.env.example` as the documented template, and let your execution context load `backend/.env.local` when needed, such as VS Code `envFile` or Docker Compose.
+
+`POST /api/agents/{id}/execute` uses the shared LLM runtime. For real model execution you must provide `OPENROUTER_API_KEY`. The test suite stubs the provider, so tests do not require live model access.
 
 The backend no longer creates tables on startup. Run `alembic upgrade head` before starting the API so schema changes always flow through migrations.
 
