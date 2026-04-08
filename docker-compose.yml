@@ -17,38 +17,35 @@ services:
       timeout: 5s
       retries: 10
 
-  migrate:
+  alembic-migrate:
     build:
       context: .
-      dockerfile: backend/Dockerfile
-    image: agenthub-backend:dev
+      dockerfile: docker/backend/Dockerfile
+    image: agenthub-backend:local
     env_file:
-      - ./backend/.env.local
-    environment:
-      AGENTHUB_DATABASE_URL: postgresql+psycopg://agenthub:agenthub@postgres:5432/agenthub
+      - ./backend/.env.prod
     depends_on:
       postgres:
         condition: service_healthy
     command: ["alembic", "upgrade", "head"]
     restart: "no"
 
-  seed-agents:
+  load-sync:
     build:
       context: .
-      dockerfile: backend/Dockerfile
-    image: agenthub-backend:dev
+      dockerfile: docker/backend/Dockerfile
+    image: agenthub-backend:local
     env_file:
-      - ./backend/.env.local
-    environment:
-      AGENTHUB_DATABASE_URL: postgresql+psycopg://agenthub:agenthub@postgres:5432/agenthub
+      - ./backend/.env.prod
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
+      alembic-migrate:
         condition: service_completed_successfully
     volumes:
       - ./agents:/app/agents:ro
       - ./schemas:/app/schemas:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     command:
       [
         "python",
@@ -56,9 +53,34 @@ services:
         "--agents-dir",
         "/app/agents",
         "--schema-path",
-        "/app/schemas/agent.schema.json"
+        "/app/schemas/agent.schema.json",
+        "--tool-image-mode",
+        "build-local",
+        "--tool-image-tag-prefix",
+        "agenthub-local"
       ]
     restart: "no"
+
+  backend-api:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    image: agenthub-backend:local
+    env_file:
+      - ./backend/.env.prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      alembic-migrate:
+        condition: service_completed_successfully
+      load-sync:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["backend"]
+    restart: unless-stopped
 
 volumes:
   postgres_data:

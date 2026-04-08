@@ -246,7 +246,11 @@ def test_load_agent_packages_builds_local_tool_images(tmp_path: Path) -> None:
         agent_version: str,
         tool_name: str,
         declared_image: str,
+        tool_image_mode: str,
+        tool_image_tag_prefix: str,
     ) -> str:
+        assert tool_image_mode == "build-local"
+        assert tool_image_tag_prefix == "agenthub-local"
         built_images.append((agent_id, agent_version, tool_name))
         return f"agenthub-local/{agent_id}-{tool_name}:{agent_version}"
 
@@ -254,6 +258,8 @@ def test_load_agent_packages_builds_local_tool_images(tmp_path: Path) -> None:
     packages = module.load_agent_packages(
         repo_root / "agents",
         repo_root / "schemas" / "agent.schema.json",
+        tool_image_mode="build-local",
+        tool_image_tag_prefix="agenthub-local",
     )
 
     clause_extractor = next(package for package in packages if package.slug == "clause-extractor")

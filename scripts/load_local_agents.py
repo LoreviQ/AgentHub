@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,13 +35,42 @@ def main() -> None:
     )
     parser.add_argument("--agents-dir", type=Path, required=True)
     parser.add_argument("--schema-path", type=Path, required=True)
+    parser.add_argument(
+        "--tool-image-mode",
+        choices=["build-local", "declared"],
+        default="build-local",
+        help=(
+            "Use 'build-local' to build packaged tool Dockerfiles into the local "
+            "Docker engine, or 'declared' to keep the image reference from "
+            "agent.yaml as-is."
+        ),
+    )
+    parser.add_argument(
+        "--tool-image-tag-prefix",
+        default=os.environ.get("AGENTHUB_TOOL_IMAGE_TAG_PREFIX", "agenthub-local"),
+        help=(
+            "Image tag prefix used when --tool-image-mode=build-local. "
+            "Defaults to AGENTHUB_TOOL_IMAGE_TAG_PREFIX or 'agenthub-local'."
+        ),
+    )
     args = parser.parse_args()
 
-    agents = load_agent_packages(args.agents_dir, args.schema_path)
+    agents = load_agent_packages(
+        args.agents_dir,
+        args.schema_path,
+        tool_image_mode=args.tool_image_mode,
+        tool_image_tag_prefix=args.tool_image_tag_prefix,
+    )
     sync_registry(engine=get_engine(), agents=agents)
 
 
-def load_agent_packages(agents_dir: Path, schema_path: Path) -> list[SeedAgentRecord]:
+def load_agent_packages(
+    agents_dir: Path,
+    schema_path: Path,
+    *,
+    tool_image_mode: str,
+    tool_image_tag_prefix: str,
+) -> list[SeedAgentRecord]:
     schema = cast(dict[str, Any], json.loads(schema_path.read_text(encoding="utf-8")))
     packages: list[SeedAgentRecord] = []
 
@@ -110,6 +140,8 @@ def load_agent_packages(agents_dir: Path, schema_path: Path) -> list[SeedAgentRe
                             agent_version=config.version,
                             tool_name=tool.name,
                             declared_image=tool.image,
+                            tool_image_mode=tool_image_mode,
+                            tool_image_tag_prefix=tool_image_tag_prefix,
                         ),
                         entrypoint=tool.entrypoint,
                         input_format=tool.input_format,
@@ -138,7 +170,12 @@ def build_tool_image(
     agent_version: str,
     tool_name: str,
     declared_image: str,
+    tool_image_mode: str,
+    tool_image_tag_prefix: str,
 ) -> str:
+    if tool_image_mode == "declared":
+        return declared_image
+
     build_dir = _resolve_tool_build_dir(agent_dir=agent_dir, tool_name=tool_name)
     if build_dir is None:
         return declared_image
@@ -147,6 +184,7 @@ def build_tool_image(
         agent_id=agent_id,
         agent_version=agent_version,
         tool_name=tool_name,
+        tool_image_tag_prefix=tool_image_tag_prefix,
     )
 
     try:
@@ -181,11 +219,19 @@ def _resolve_tool_build_dir(*, agent_dir: Path, tool_name: str) -> Path | None:
 
 
 def _runtime_tool_image_tag(
-    *, agent_id: str, agent_version: str, tool_name: str
+    *,
+    agent_id: str,
+    agent_version: str,
+    tool_name: str,
+    tool_image_tag_prefix: str,
 ) -> str:
     normalized_agent_id = agent_id.replace("_", "-")
     normalized_tool_name = tool_name.replace("_", "-")
-    return f"agenthub-local/{normalized_agent_id}-{normalized_tool_name}:{agent_version}"
+    normalized_prefix = tool_image_tag_prefix.rstrip("/")
+    return (
+        f"{normalized_prefix}/{normalized_agent_id}-{normalized_tool_name}:"
+        f"{agent_version}"
+    )
 
 
 if __name__ == "__main__":

@@ -5,3 +5,4 @@ __pycache__
 *.db
 .mypy_cache
 backend/.env.local
+*.env*
