@@ -53,3 +53,17 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
 
         missing = await client.get("/api/agents/does-not-exist")
         assert missing.status_code == 404
+
+
+def test_sync_registry_is_idempotent(tmp_path: Path, monkeypatch) -> None:
+    db_path = tmp_path / "test.db"
+    monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
+    reset_database_state()
+    get_settings.cache_clear()
+    settings = get_settings()
+
+    _run_migrations()
+    engine = get_engine()
+
+    sync_registry(engine=engine, settings=settings)
+    sync_registry(engine=engine, settings=settings)

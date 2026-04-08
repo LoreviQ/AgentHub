@@ -139,19 +139,37 @@ def hydrate_agent_record(record: AgentRecord, package: ParsedAgentPackage) -> No
     )
     record.raw_config = package.raw_config
 
-    record.tools.clear()
+    existing_tools = {tool.name: tool for tool in record.tools}
+    seen_tool_names: set[str] = set()
+
     for tool in config.tools.items:
-        record.tools.append(
-            AgentToolRecord(
-                name=tool.name,
-                description=tool.description,
-                image=tool.image,
-                entrypoint=tool.entrypoint,
-                input_format=tool.input_format,
-                output_format=tool.output_format,
-                timeout_seconds=tool.timeout_seconds,
+        seen_tool_names.add(tool.name)
+        tool_record = existing_tools.get(tool.name)
+
+        if tool_record is None:
+            record.tools.append(
+                AgentToolRecord(
+                    name=tool.name,
+                    description=tool.description,
+                    image=tool.image,
+                    entrypoint=tool.entrypoint,
+                    input_format=tool.input_format,
+                    output_format=tool.output_format,
+                    timeout_seconds=tool.timeout_seconds,
+                )
             )
-        )
+            continue
+
+        tool_record.description = tool.description
+        tool_record.image = tool.image
+        tool_record.entrypoint = tool.entrypoint
+        tool_record.input_format = tool.input_format
+        tool_record.output_format = tool.output_format
+        tool_record.timeout_seconds = tool.timeout_seconds
+
+    for tool_record in list(record.tools):
+        if tool_record.name not in seen_tool_names:
+            record.tools.remove(tool_record)
 
 
 def _optional_file(*paths: Path) -> Path | None:
