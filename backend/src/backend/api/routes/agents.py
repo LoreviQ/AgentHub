@@ -3,8 +3,11 @@ from sqlalchemy.orm import Session
 
 from backend.db.models import AgentRecord
 from backend.db.session import get_engine
-from backend.schemas.agent import AgentDetailResponse, AgentListItemResponse, AgentToolResponse
-
+from backend.schemas.agent import (
+    AgentDetailResponse,
+    AgentListItemResponse,
+    AgentToolResponse,
+)
 
 router = APIRouter(tags=["agents"])
 
@@ -32,7 +35,11 @@ async def list_agents() -> list[AgentListItemResponse]:
 @router.get("/agents/{agent_id}", response_model=AgentDetailResponse)
 async def get_agent(agent_id: str) -> AgentDetailResponse:
     with Session(get_engine()) as session:
-        record = session.query(AgentRecord).filter(AgentRecord.slug == agent_id).one_or_none()
+        record = (
+            session.query(AgentRecord)
+            .filter(AgentRecord.slug == agent_id)
+            .one_or_none()
+        )
         if record is None:
             raise HTTPException(status_code=404, detail="Agent not found")
 

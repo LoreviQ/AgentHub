@@ -1,0 +1,39 @@
+{
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.venv",
+    "**/alembic",
+    "**/typings"
+  ],
+
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "standard",
+
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "include": [
+        "backend/src",
+        "backend/tests"
+      ],
+      "extraPaths": [
+        "backend/src"
+      ],
+      "stubPath": "backend/typings",
+      "venv": ".venv",
+      "venvPath": "backend"
+    }
+
+    // Add more projects here later:
+    // ,
+    // {
+    //   "root": "worker",
+    //   "include": ["worker/src", "worker/tests"],
+    //   "extraPaths": ["worker/src"],
+    //   "stubPath": "worker/typings",
+    //   "venv": ".venv",
+    //   "venvPath": "worker"
+    // }
+  ]
+}

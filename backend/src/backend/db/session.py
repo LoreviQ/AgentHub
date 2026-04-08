@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from backend.core.config import get_settings
 
-
 _engine: Engine | None = None
 _session_factory: sessionmaker[Session] | None = None
 
@@ -21,7 +20,9 @@ def get_engine() -> Engine:
     global _engine, _session_factory
     if _engine is None:
         settings = get_settings()
-        _engine = create_engine(settings.database_url, **_engine_kwargs(settings.database_url))
+        _engine = create_engine(
+            settings.database_url, **_engine_kwargs(settings.database_url)
+        )
         _session_factory = sessionmaker(bind=_engine, autocommit=False, autoflush=False)
     return _engine
 

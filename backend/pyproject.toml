@@ -33,11 +33,9 @@ pythonVersion = "3.12"
 typeCheckingMode = "standard"
 venvPath = "."
 venv = ".venv"
-reportUnknownVariableType = "none"
-reportUnknownMemberType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownParameterType = "none"
-reportUntypedFunctionDecorator = "none"
+
+
+
 
 [tool.mypy]
 files = ["src", "tests"]

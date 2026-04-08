@@ -58,7 +58,9 @@ def sync_registry(*, engine: Engine, settings: Settings) -> None:
         session.commit()
 
 
-def load_agent_packages(agents_dir: Path, schema_path: Path) -> list[ParsedAgentPackage]:
+def load_agent_packages(
+    agents_dir: Path, schema_path: Path
+) -> list[ParsedAgentPackage]:
     schema = cast(dict[str, Any], json.loads(schema_path.read_text(encoding="utf-8")))
     packages: list[ParsedAgentPackage] = []
 
@@ -129,7 +131,9 @@ def hydrate_agent_record(record: AgentRecord, package: ParsedAgentPackage) -> No
     record.input_mode = config.io.input_mode
     record.output_mode = config.io.output_mode
     record.package_path = str(package.directory)
-    record.example_input_path = str(package.example_input_path) if package.example_input_path else None
+    record.example_input_path = (
+        str(package.example_input_path) if package.example_input_path else None
+    )
     record.example_output_path = (
         str(package.example_output_path) if package.example_output_path else None
     )

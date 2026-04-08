@@ -1,13 +1,12 @@
 from pathlib import Path
 
 import pytest
-from httpx import ASGITransport, AsyncClient
-
 from backend.core.config import get_settings
 from backend.db.base import Base
 from backend.db.session import get_engine, reset_database_state
 from backend.main import create_app
 from backend.services.registry import sync_registry
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest.mark.anyio
