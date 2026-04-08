@@ -19,10 +19,34 @@ dependencies = [
 ]
 
 [project.scripts]
-backend = "backend:main"
+backend = "backend.cli:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+exclude = ["alembic", "typings", ".venv", ".pytest_cache", "**/__pycache__"]
+extraPaths = ["src"]
+stubPath = "typings"
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownParameterType = "none"
+reportUntypedFunctionDecorator = "none"
+
+[tool.mypy]
+files = ["src", "tests"]
+mypy_path = "src:typings"
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+strict_equality = true
+exclude = ["alembic"]
 
 [build-system]
 requires = ["uv_build>=0.11.4,<0.12.0"]
@@ -30,6 +54,8 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.39.0",
     "httpx>=0.28.1",
+    "mypy>=1.20.0",
     "pytest>=9.0.3",
 ]

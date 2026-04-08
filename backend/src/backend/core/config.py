@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     app_name: str = "AgentHub Backend"
     api_prefix: str = "/api"
     database_url: str = Field(
-        default=f"sqlite:///{(BACKEND_DIR / 'agenthub.db').as_posix()}",
+        default="postgresql+psycopg://agenthub:agenthub@localhost:5432/agenthub",
     )
     agents_dir: Path = ROOT_DIR / "agents"
     schema_path: Path = ROOT_DIR / "schemas" / "agent.schema.json"

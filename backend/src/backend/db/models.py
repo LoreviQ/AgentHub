@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import Boolean, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,7 +31,7 @@ class AgentRecord(Base):
     package_path: Mapped[str] = mapped_column(String(1024))
     example_input_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     example_output_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
-    raw_config: Mapped[dict] = mapped_column(JSON)
+    raw_config: Mapped[dict[str, Any]] = mapped_column(JSON)
 
     tools: Mapped[list[AgentToolRecord]] = relationship(
         back_populates="agent",

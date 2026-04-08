@@ -4,8 +4,9 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from backend.core.config import get_settings
+from backend.db.base import Base
+from backend.db.session import get_engine, reset_database_state
 from backend.main import create_app
-from backend.db.session import initialize_database, reset_database_state
 from backend.services.registry import sync_registry
 
 
@@ -17,7 +18,8 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
     get_settings.cache_clear()
     settings = get_settings()
 
-    engine = initialize_database()
+    engine = get_engine()
+    Base.metadata.create_all(bind=engine)
     sync_registry(engine=engine, settings=settings)
 
     app = create_app()
