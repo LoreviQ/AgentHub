@@ -17,5 +17,20 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: agenthub-backend:dev
+    env_file:
+      - ./backend/.env.local
+    environment:
+      AGENTHUB_DATABASE_URL: postgresql+psycopg://agenthub:agenthub@postgres:5432/agenthub
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+
 volumes:
   postgres_data:

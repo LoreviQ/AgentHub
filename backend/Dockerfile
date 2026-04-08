@@ -1,0 +1,34 @@
+FROM python:3.12-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_LINK_MODE=copy
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv
+
+WORKDIR /app/backend
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+COPY backend/pyproject.toml backend/uv.lock ./
+COPY backend/README.md ./README.md
+COPY backend/src ./src
+
+RUN uv sync --locked --no-dev --no-editable
+
+FROM python:3.12-slim AS runner
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH=/opt/venv/bin:$PATH
+ENV AGENTHUB_AGENTS_DIR=/app/agents
+ENV AGENTHUB_SCHEMA_PATH=/app/schemas/agent.schema.json
+
+WORKDIR /app/backend
+
+COPY --from=builder /opt/venv /opt/venv
+COPY backend/alembic.ini ./alembic.ini
+COPY backend/alembic ./alembic
+COPY agents /app/agents
+COPY schemas /app/schemas
+
+CMD ["backend"]
