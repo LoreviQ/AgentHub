@@ -3,274 +3,371 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Clock3, Cpu, Globe, Package, Wrench } from "lucide-react";
+import { ArrowLeft, Coins, Copy, Cpu, Package, ShieldCheck, Sparkles, Star, Wrench } from "lucide-react";
 import { api } from "@/lib/api-client";
+import { AgentChatPanel } from "@/components/agent-chat-panel";
 import { CopyCommandBlock } from "@/components/copy-command-block";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InvokeAgentDialog } from "@/components/invoke-agent-dialog";
+import {
+  buildLiveMarketplaceProfile,
+  getCatalogAgentIds,
+  getDisplayOnlyAgent,
+  type MarketplaceAgentProfile,
+} from "@/lib/marketplace-content";
 
-function formatExampleOutput(output: unknown, raw: string | null): string {
-  if (raw) {
-    return raw;
+function prettyJson(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
   }
-  if (output == null) {
-    return "No example response available.";
-  }
-  if (typeof output === "string") {
-    return output;
-  }
-  return JSON.stringify(output, null, 2);
+  return JSON.stringify(value, null, 2);
 }
 
 export default function AgentDetailsPage() {
   const params = useParams<{ id: string }>();
-  const query = useQuery({
+  const isKnown = getCatalogAgentIds().includes(params.id);
+
+  const liveAgentQuery = useQuery({
     queryKey: ["agent", params.id],
     queryFn: () => api.getAgent(params.id),
+    enabled: params.id === "legal-checker" || params.id === "clause-extractor",
   });
 
-  const agent = query.data;
-  if (query.isLoading) {
-    return <div className="p-8 text-stone-700">Loading agent details...</div>;
+  if (!isKnown) {
+    return (
+      <div className="min-h-screen text-zinc-100">
+        <SiteHeader />
+        <main className="mx-auto max-w-4xl px-4 py-16">
+          <Card className="border-rose-400/20 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="text-white">Listing not found</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-zinc-300">
+              <p>This marketplace listing does not exist in the MVP catalog.</p>
+              <Link
+                href="/marketplace"
+                className="font-mono text-cyan-300 hover:text-cyan-100"
+              >
+                Return to marketplace →
+              </Link>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
   }
-  if (!agent) return <div className="p-8 text-stone-700">Agent not found.</div>;
 
-  const endpointPath = `/api/agents/${agent.id}/execute`;
-  const sampleInput = agent.example_input ?? "<document text>";
-  const bodyJson = JSON.stringify({ input: sampleInput }, null, 2);
-  const assistantInstruction = [
-    `Use the AgentHub execution endpoint for ${agent.name}.`,
-    `POST ${endpointPath}`,
-    "Content-Type: application/json",
-    "",
-    "Body:",
-    bodyJson,
-    "",
-    "Return the API response output to the user without changing its structure.",
-  ].join("\n");
-  const curlCommand = [
-    `curl -X POST "$AGENTHUB_URL${endpointPath}" \\`,
-    '  -H "Content-Type: application/json" \\',
-    `  -d '${JSON.stringify({ input: sampleInput })}'`,
-  ].join("\n");
+  const detail = liveAgentQuery.data;
+  const mockProfile = getDisplayOnlyAgent(params.id);
+  const profile: MarketplaceAgentProfile | undefined =
+    detail != null
+      ? buildLiveMarketplaceProfile(detail, detail)
+      : mockProfile;
+
+  if ((params.id === "legal-checker" || params.id === "clause-extractor") && liveAgentQuery.isLoading) {
+    return <div className="p-8 font-mono text-zinc-300">Loading agent listing...</div>;
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen text-zinc-100">
+        <SiteHeader />
+        <main className="mx-auto max-w-4xl px-4 py-16">
+          <Card className="border-rose-400/20 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="text-white">Agent details unavailable</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-zinc-300">
+              <p>
+                This listing exists, but its detail payload could not be loaded
+                right now.
+              </p>
+              <Link
+                href="/marketplace"
+                className="font-mono text-cyan-300 hover:text-cyan-100"
+              >
+                Return to marketplace →
+              </Link>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  const stubbedEndpoint = `https://agenthub.example/api/agents/${profile.id}/execute`;
+  const copyBlock = profile.source === "live"
+    ? [
+        `When a user needs ${profile.name}, call the AgentHub marketplace specialist endpoint.`,
+        `Use POST ${stubbedEndpoint}`,
+        'Send JSON as: { "input": "<user text or document excerpt>" }',
+        "Use this agent when the task matches its specialty and you want a packaged third-party-style agent rather than a general answer.",
+        "Return the output clearly, and mention that AgentHub executed the specialist on the platform runtime.",
+      ].join("\n")
+    : [
+        `${profile.name} is currently a display-only marketplace listing in the MVP.`,
+        "Do not attempt to call it yet.",
+        "Treat it as a preview of how future creator agents will appear once open publishing is supported.",
+      ].join("\n");
+
+  const exampleRequest = prettyJson(profile.sampleRequestBody);
+  const exampleResponse = prettyJson(profile.sampleResponse);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fef3c7_0%,rgba(254,243,199,0.15)_24%,transparent_48%),radial-gradient(circle_at_top_right,#99f6e4_0%,rgba(153,246,228,0.18)_18%,transparent_42%),linear-gradient(180deg,#faf7f0_0%,#f3efe6_100%)] text-stone-950">
+    <div className="min-h-screen text-zinc-100">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 md:py-12">
+      <main className="mx-auto max-w-7xl space-y-8 px-4 py-8">
         <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900"
+          href="/marketplace"
+          className="inline-flex items-center gap-2 font-mono text-sm text-cyan-300 hover:text-cyan-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to demo site
+          Back to marketplace
         </Link>
 
-        <section className="rounded-[36px] border border-stone-900/10 bg-white/80 p-6 shadow-[0_30px_100px_rgba(28,25,23,0.08)] md:p-8">
-          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-start">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold tracking-[0.18em] text-stone-500 uppercase">
-                {agent.id}
-              </p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
-                {agent.name}
-              </h1>
-              <p className="mt-4 text-lg leading-8 text-stone-600">
-                {agent.description}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Badge className="border-stone-900/10 bg-stone-900/[0.04] text-stone-700">
-                  Version {agent.version}
-                </Badge>
-                <Badge className="border-stone-900/10 bg-stone-900/[0.04] text-stone-700">
-                  {agent.model_provider}
-                </Badge>
-                <Badge className="border-stone-900/10 bg-stone-900/[0.04] text-stone-700">
-                  {agent.model_name}
-                </Badge>
+        <section className="neon-frame overflow-hidden rounded-[36px] bg-[#090312]/92 p-7">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <div className="flex flex-wrap gap-2">
                 <Badge
                   className={
-                    agent.tools_enabled
-                      ? "border-amber-700/20 bg-amber-500/10 text-amber-900"
-                      : "border-emerald-700/20 bg-emerald-500/10 text-emerald-900"
+                    profile.source === "live"
+                      ? "border-emerald-400/30 bg-emerald-500/10 font-mono text-emerald-300"
+                      : "border-fuchsia-400/30 bg-fuchsia-500/10 font-mono text-fuchsia-300"
                   }
                 >
-                  {agent.tools_enabled ? "Tool-enabled runtime" : "LLM-only runtime"}
+                  {profile.statusLabel}
+                </Badge>
+                <Badge className="border-cyan-400/20 bg-cyan-400/10 font-mono text-cyan-200">
+                  {profile.creatorHandle}
+                </Badge>
+                <Badge className="border-white/10 bg-white/5 font-mono text-zinc-300">
+                  {profile.trustLabel}
                 </Badge>
               </div>
-            </div>
-            <InvokeAgentDialog agent={agent} />
-          </div>
-        </section>
+              <h1 className="mt-4 text-4xl font-semibold text-white md:text-5xl">
+                {profile.name}
+              </h1>
+              <p className="mt-4 text-xl text-cyan-100/90">{profile.tagline}</p>
+              <p className="mt-5 max-w-3xl leading-8 text-zinc-300">
+                {profile.longDescription}
+              </p>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-stone-900">
-                <Cpu className="h-5 w-5 text-teal-700" />
-                Model
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm leading-6 text-stone-600">
-              <p>{agent.model_provider}</p>
-              <p>{agent.model_name}</p>
-              <p>Temperature {agent.model_temperature}</p>
-              <p>Max tokens {agent.model_max_tokens}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-stone-900">
-                <Clock3 className="h-5 w-5 text-amber-700" />
-                Runtime
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm leading-6 text-stone-600">
-              <p>Timeout {agent.runtime_timeout_seconds}s</p>
-              <p>Input mode {agent.input_mode}</p>
-              <p>Output mode {agent.output_mode}</p>
-              <p>{agent.runtime_execution_notes ?? "No execution notes recorded."}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-stone-900">
-                <Globe className="h-5 w-5 text-emerald-700" />
-                Network policy
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm leading-6 text-stone-600">
-              <p>
-                Internet access{" "}
-                {agent.runtime_internet_access ? "enabled" : "disabled"}
-              </p>
-              <p>
-                Shared platform endpoint: <span className="font-medium text-stone-900">{endpointPath}</span>
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-stone-900">
-                <Package className="h-5 w-5 text-stone-700" />
-                Package files
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm leading-6 text-stone-600">
-              <p>{agent.package_path}</p>
-              <p>{agent.example_input_path ?? "No example input file"}</p>
-              <p>{agent.example_output_path ?? "No example output file"}</p>
-            </CardContent>
-          </Card>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {profile.categories.map((category) => (
+                  <Badge
+                    key={category}
+                    className="border-white/10 bg-white/5 font-mono text-zinc-300"
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <MetricCard icon={<Star className="h-4 w-4 text-amber-300" />} label="Rating" value={`${profile.rating.toFixed(1)} / 5`} />
+              <MetricCard icon={<ShieldCheck className="h-4 w-4 text-emerald-300" />} label="Reviews" value={`${profile.reviewCount}`} />
+              <MetricCard icon={<Coins className="h-4 w-4 text-cyan-300" />} label={profile.priceLabel} value={profile.priceValue} />
+              <MetricCard icon={<Sparkles className="h-4 w-4 text-fuchsia-300" />} label="Usage" value={profile.runCountLabel} />
+            </div>
+          </div>
         </section>
 
         <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
-            <CopyCommandBlock
-              title="Assistant Invocation"
-              description="Paste this into another assistant so it knows exactly which AgentHub endpoint to call."
-              code={assistantInstruction}
-            />
-            <CopyCommandBlock
-              title="cURL Example"
-              description="A copyable command block for direct HTTP invocation."
-              code={curlCommand}
-            />
-          </div>
+            <Card className="border-cyan-400/15 bg-[#090312]/92">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Cpu className="h-5 w-5 text-cyan-300" />
+                  What it does
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 leading-7 text-zinc-300">
+                <p>{profile.description}</p>
+                <div>
+                  <p className="mb-2 font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+                    Best for
+                  </p>
+                  <ul className="space-y-2">
+                    {profile.useCases.map((useCase) => (
+                      <li key={useCase}>• {useCase}</li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="text-stone-900">Public usage instructions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="overflow-x-auto rounded-2xl bg-stone-950 px-4 py-4 text-sm leading-6 whitespace-pre-wrap text-stone-100">
-                <code>{agent.public_instructions}</code>
-              </pre>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="text-stone-900">Example request</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="overflow-x-auto rounded-2xl bg-stone-950 px-4 py-4 text-sm leading-6 whitespace-pre-wrap text-stone-100">
-                <code>{agent.example_input ?? "No example request available."}</code>
-              </pre>
-            </CardContent>
-          </Card>
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="text-stone-900">Example response</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="overflow-x-auto rounded-2xl bg-stone-950 px-4 py-4 text-sm leading-6 whitespace-pre-wrap text-stone-100">
-                <code>
-                  {formatExampleOutput(agent.example_output, agent.example_output_raw)}
-                </code>
-              </pre>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="text-stone-900">Packaged instructions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="overflow-x-auto rounded-2xl bg-stone-950 px-4 py-4 text-sm leading-6 whitespace-pre-wrap text-stone-100">
-                <code>{agent.instructions_markdown}</code>
-              </pre>
-            </CardContent>
-          </Card>
-
-          <Card className="border-stone-900/10 bg-white/80">
-            <CardHeader>
-              <CardTitle className="text-stone-900">
-                {agent.tools_enabled ? "Declared tools" : "Execution shape"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {agent.tools.length === 0 ? (
-                <div className="rounded-2xl border border-emerald-700/20 bg-emerald-500/8 p-4 text-sm leading-6 text-stone-700">
-                  <p className="font-medium text-emerald-900">LLM-only agent</p>
-                  <p className="mt-1">
-                    This package relies only on its prompt, model selection, and the shared AgentHub runtime.
+            <Card className="border-fuchsia-400/15 bg-[#090312]/92">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Wrench className="h-5 w-5 text-fuchsia-300" />
+                  How it works
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 leading-7 text-zinc-300">
+                <p>{profile.whyThisExists}</p>
+                <ul className="space-y-2">
+                  {profile.howItWorks.map((step) => (
+                    <li key={step}>• {step}</li>
+                  ))}
+                </ul>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+                    Runtime summary
+                  </p>
+                  <p className="mt-2 text-zinc-300">
+                    {detail
+                      ? `${detail.model_provider}/${detail.model_name} • ${detail.output_mode} output • timeout ${detail.runtime_timeout_seconds}s`
+                      : profile.toolSummary}
                   </p>
                 </div>
-              ) : (
-                agent.tools.map((tool) => (
-                  <div
-                    key={tool.name}
-                    className="rounded-2xl border border-stone-900/10 bg-stone-900/[0.03] p-4"
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      <Wrench className="h-4 w-4 text-amber-700" />
-                      <p className="font-medium text-stone-900">{tool.name}</p>
-                    </div>
-                    <p className="text-sm leading-6 text-stone-600">
-                      {tool.description}
+              </CardContent>
+            </Card>
+          </div>
+
+          <AgentChatPanel profile={profile} detail={detail} />
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <CopyCommandBlock
+            title="Copy for your personal assistant"
+            description="This is intentionally stubbed because the backend is not public-user-facing yet."
+            code={copyBlock}
+          />
+          <Card className="border-amber-400/15 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Copy className="h-5 w-5 text-amber-300" />
+                Cost and marketplace notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 leading-7 text-zinc-300">
+              <p>
+                <span className="text-white">{profile.priceLabel}:</span>{" "}
+                {profile.priceValue}
+              </p>
+              <p>{profile.costBlurb}</p>
+              <p>
+                <span className="text-white">Listing status:</span>{" "}
+                {profile.source === "live"
+                  ? "Curated live MVP agent. This one actually executes."
+                  : profile.displayOnlyReason}
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <Card className="border-cyan-400/15 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="text-white">Example request</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/35 p-4 font-mono text-sm leading-6 text-cyan-100">
+                <code>{exampleRequest}</code>
+              </pre>
+            </CardContent>
+          </Card>
+          <Card className="border-fuchsia-400/15 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="text-white">Example response</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="overflow-x-auto whitespace-pre-wrap rounded-2xl border border-white/10 bg-black/35 p-4 font-mono text-sm leading-6 text-fuchsia-100">
+                <code>{exampleResponse}</code>
+              </pre>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
+          <Card className="border-white/10 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Package className="h-5 w-5 text-cyan-300" />
+                Agent details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-zinc-300">
+              {detail ? (
+                <>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+                      Public instructions
                     </p>
-                    <div className="mt-3 space-y-1 text-sm text-stone-600">
-                      <p>Image: {tool.image}</p>
-                      <p>Entrypoint: {tool.entrypoint}</p>
-                      <p>
-                        Contract: {tool.input_format} in, {tool.output_format} out
-                      </p>
-                      <p>Timeout: {tool.timeout_seconds}s</p>
-                    </div>
+                    <pre className="mt-3 whitespace-pre-wrap font-mono text-sm leading-6 text-zinc-200">
+                      <code>{detail.public_instructions}</code>
+                    </pre>
                   </div>
-                ))
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+                      Packaged instructions
+                    </p>
+                    <pre className="mt-3 whitespace-pre-wrap font-mono text-sm leading-6 text-zinc-200">
+                      <code>{detail.instructions_markdown}</code>
+                    </pre>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 leading-7">
+                  <p>{profile.toolSummary}</p>
+                </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/10 bg-[#090312]/92">
+            <CardHeader>
+              <CardTitle className="text-white">Reviews</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {profile.reviews.map((review) => (
+                <div
+                  key={`${review.author}-${review.quote}`}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-white">{review.author}</p>
+                      <p className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+                        {review.role}
+                      </p>
+                    </div>
+                    <Badge className="border-amber-400/30 bg-amber-500/10 font-mono text-amber-300">
+                      {review.rating.toFixed(1)} / 5
+                    </Badge>
+                  </div>
+                  <p className="leading-7 text-zinc-300">{review.quote}</p>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </section>
       </main>
+    </div>
+  );
+}
+
+function MetricCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[26px] border border-white/10 bg-white/5 p-5">
+      <div className="mb-2 inline-flex items-center gap-2 text-zinc-300">
+        {icon}
+        <span className="font-mono text-xs uppercase tracking-[0.22em] text-zinc-500">
+          {label}
+        </span>
+      </div>
+      <p className="text-xl font-semibold text-white">{value}</p>
     </div>
   );
 }

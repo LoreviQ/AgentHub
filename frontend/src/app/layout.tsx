@@ -3,9 +3,9 @@ import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata: Metadata = {
-  title: "AgentHub | Packaged Agent Demo",
+  title: "AgentHub | Cyberpunk Agent Marketplace MVP",
   description:
-    "Browse packaged demo agents, copy invocation instructions, and call the AgentHub execution API.",
+    "A marketplace-style MVP for packaged specialist agents, with two live demo agents and display-only creator listings.",
 };
 
 export default function RootLayout({
