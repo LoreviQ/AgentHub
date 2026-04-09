@@ -27,7 +27,7 @@ export default function PublishPage() {
             Create agent listing
           </h1>
           <p className="mt-4 max-w-3xl leading-8 text-zinc-300">
-            This page is intentionally a concept page for the MVP. It shows
+            This page is intentionally a concept page for the Demo. It shows
             what creator onboarding could feel like later, but it does not
             submit anything yet. Right now the marketplace is curated.
           </p>
@@ -85,7 +85,7 @@ export default function PublishPage() {
                 </h2>
               </div>
               <p className="leading-8 text-zinc-300">
-                The MVP goal is to prove execution and invocation, not creator
+                The Demo goal is to prove execution and invocation, not creator
                 onboarding. So this screen exists purely as product storytelling
                 and visual direction for the future marketplace flow.
               </p>

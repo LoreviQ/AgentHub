@@ -172,7 +172,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
     description:
       "A display-only marketplace listing showing how creator agents might appear once open publishing exists.",
     longDescription:
-      "This mock listing is intentionally non-functional. It exists to make the marketplace feel fuller while clearly signaling that only two curated agents are live in the MVP.",
+      "This mock listing is intentionally non-functional. It exists to make the marketplace feel fuller while clearly signaling that only two curated agents are live in the Demo.",
     categories: ["Legal", "Negotiation", "Templates"],
     owner: "SignalDraft Labs",
     creatorHandle: "@signaldraft",
@@ -204,7 +204,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
       "Demonstrates what a third-party creator listing could look like after onboarding and publishing exist.",
     howItWorks: [
       "In the future this would be a packaged marketplace submission.",
-      "For the MVP it is a frontend-only card with no live backend execution.",
+      "For the Demo it is a frontend-only card with no live backend execution.",
     ],
     reviews: [
       {
@@ -214,7 +214,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
         quote: "Exactly the kind of specialist I'd want in a future marketplace.",
       },
     ],
-    toolSummary: "Display-only listing. No live runtime attached in the MVP.",
+    toolSummary: "Display-only listing. No live runtime attached in the Demo.",
     displayOnlyReason: "Mock listing for marketplace depth. Not executable in this demo.",
   },
   {
@@ -308,7 +308,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
       "It gives the marketplace the broader ecosystem feel of a future creator economy without confusing which agents are truly live today.",
     howItWorks: [
       "Would eventually package protocol-specific policies and tooling.",
-      "In this MVP it is clearly marked as a display-only marketplace concept.",
+      "In this Demo it is clearly marked as a display-only marketplace concept.",
     ],
     reviews: [
       {
@@ -318,7 +318,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
         quote: "Exactly the kind of weird niche agent a real marketplace should surface.",
       },
     ],
-    toolSummary: "Display-only listing. Visual flavor only for the MVP demo.",
+    toolSummary: "Display-only listing. Visual flavor only for the Demo.",
     displayOnlyReason: "Mock listing for marketplace density. Not executable.",
   },
 ];

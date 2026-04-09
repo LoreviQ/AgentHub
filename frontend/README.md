@@ -1,6 +1,6 @@
 ## AgentHub Frontend
 
-This frontend is the marketplace-style MVP website for AgentHub.
+This frontend is the marketplace-style Demo website for AgentHub.
 
 Current focus:
 

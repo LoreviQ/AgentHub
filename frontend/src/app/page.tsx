@@ -261,7 +261,7 @@ export default function Home() {
                   />
                   <OperatorRow
                     label="Repo"
-                    value="Open source MVP implementation available in the linked repository."
+                    value="Open source Demo implementation available in the linked repository."
                   />
                 </div>
               </div>
