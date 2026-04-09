@@ -11,12 +11,15 @@ import {
   Workflow,
   Wrench,
 } from "lucide-react";
+import { CopyValueField } from "@/components/copy-value-field";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { getMcpServerUrl } from "@/lib/server/mcp-config";
 import { cn } from "@/lib/utils";
 
 const repoUrl = process.env.NEXT_PUBLIC_GIT_REPO_URL;
+const mcpServerUrl = getMcpServerUrl();
 
 const narrativeRows = [
   {
@@ -86,6 +89,10 @@ export default function Home() {
                 work to a specialist without trusting the creator&apos;s own
                 infrastructure.
               </p>
+              <CopyValueField
+                label="Streamable HTTP MCP Server"
+                value={mcpServerUrl}
+              />
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   href="/marketplace"

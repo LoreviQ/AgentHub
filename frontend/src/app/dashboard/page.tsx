@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
+import { CopyCommandBlock } from "@/components/copy-command-block";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,15 @@ export default function DashboardPage() {
   if (dashboardQuery.isLoading) return <div className="p-8">Loading dashboard...</div>;
   if (!dashboardQuery.data) return <div className="p-8">No dashboard data.</div>;
 
-  const { billing, invocations, apiKeys } = dashboardQuery.data;
+  const { billing, invocations, apiKeys, mcp } = dashboardQuery.data;
+  const assistantInstructions = [
+    "Add a custom MCP server in your assistant/client settings.",
+    `Transport: ${mcp.transport}`,
+    `URL: ${mcp.serverUrl}`,
+    `If the backend requires auth, send Authorization: Bearer <${mcp.bearerTokenEnvVar}>`,
+    `Frontend env: ${mcp.backendUrlEnvVar}=https://your-backend-host`,
+    `Frontend env: ${mcp.addressEnvVar}=https://your-backend-host/mcp/`,
+  ].join("\n");
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -38,6 +47,12 @@ export default function DashboardPage() {
           <Metric title="Invocations" value={String(billing.totalInvocations)} />
           <Metric title="Plan" value={billing.currentPlan} />
         </div>
+
+        <CopyCommandBlock
+          title="Add MCP Server"
+          description="Use this streamable HTTP MCP endpoint in your frontend or personal assistant client. The URL is derived from frontend env, so it can point at the hosted backend instead of localhost."
+          code={assistantInstructions}
+        />
 
         <Tabs defaultValue="invocations">
           <TabsList>
