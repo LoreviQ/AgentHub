@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-agenthub}
+      POSTGRES_USER: ${POSTGRES_USER:-agenthub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your env file}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agenthub} -d ${POSTGRES_DB:-agenthub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    image: ${AGENTHUB_BACKEND_IMAGE:-agenthub-backend:local}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AGENTHUB_APP_NAME: ${AGENTHUB_APP_NAME:-AgentHub Backend}
+      AGENTHUB_API_PREFIX: ${AGENTHUB_API_PREFIX:-/api}
+      AGENTHUB_MCP_PATH: ${AGENTHUB_MCP_PATH:-/mcp}
+      AGENTHUB_MCP_BEARER_TOKEN: ${AGENTHUB_MCP_BEARER_TOKEN:-}
+      AGENTHUB_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-agenthub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-agenthub}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      AGENTHUB_TOOL_IMAGE_TAG_PREFIX: ${AGENTHUB_TOOL_IMAGE_TAG_PREFIX:-agenthub}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+      tags:
+        - ${AGENTHUB_FRONTEND_IMAGE:-agenthub-frontend:local}
+      args:
+        NEXT_PUBLIC_GIT_REPO_URL: ${NEXT_PUBLIC_GIT_REPO_URL:-}
+        NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment:
+      AGENTHUB_BACKEND_URL: ${AGENTHUB_BACKEND_URL:-http://backend:8000}
+      NEXT_MCP_ADDRESS: ${NEXT_MCP_ADDRESS:-http://backend:8000/mcp/}
+      NEXT_PUBLIC_GIT_REPO_URL: ${NEXT_PUBLIC_GIT_REPO_URL:-}
+      NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  postgres_prod_data:
