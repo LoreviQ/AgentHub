@@ -1,6 +1,6 @@
 ## AgentHub Frontend
 
-This frontend is the marketplace-style MVP website for AgentHub.
+This frontend is the marketplace-style Demo website for AgentHub.
 
 Current focus:
 
@@ -31,6 +31,16 @@ Open [http://localhost:3000](http://localhost:3000)
 Use Node `25.9.0` for this project. The repo now includes `.nvmrc`, so `nvm use` should select the expected runtime automatically.
 
 Set `NEXT_PUBLIC_GIT_REPO_URL` in `frontend/.env.local` for the repo link shown on the landing page.
+Set `AGENTHUB_BACKEND_URL` in `frontend/.env.local` to the backend origin the site should talk to.
+Set `NEXT_MCP_ADDRESS` in `frontend/.env.local` to the full streamable HTTP MCP server URL shown in the hero.
+
+Example `frontend/.env.local`:
+
+```bash
+NEXT_PUBLIC_GIT_REPO_URL=https://github.com/your-org/AgentHub
+AGENTHUB_BACKEND_URL=https://agenthub.example
+NEXT_MCP_ADDRESS=https://agenthub.example/mcp/
+```
 
 ## Key Routes
 

@@ -35,3 +35,17 @@ For deployment on Hetzner/Coolify, the preferred path is:
 4. run `load-sync` in `declared` mode so the loader stores the declared image reference without rebuilding it
 
 That gives us a clean bridge from local demo packaging to production-friendly image distribution without changing the runtime contract.
+
+## Production Baseline Stack
+
+The repo also includes [docker-compose.prod.yml](/home/lore/workspace/AgentHub/docker-compose.prod.yml)
+for a conservative external deployment with:
+
+- PostgreSQL
+- backend API
+- frontend
+
+It intentionally does not run migrations or the agent loader automatically. See
+[PROD_DOCKER_DEPLOYMENT.md](/home/lore/workspace/AgentHub/docs/PROD_DOCKER_DEPLOYMENT.md)
+for the runbook and the caveat around loading tool-enabled agents into a remote
+environment.

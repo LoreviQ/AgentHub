@@ -49,6 +49,18 @@ def _seed_example_agents() -> list[SeedAgentRecord]:
             ),
             input_mode="text",
             output_mode="json",
+            marketplace_short_pitch="Structured clause extraction with optional packaged tool support.",
+            marketplace_price="$0.14 / run",
+            marketplace_trust_badge="Platform verified",
+            marketplace_rating=4.8,
+            marketplace_review_count=18,
+            marketplace_categories=["Legal", "Extraction", "Structured Data"],
+            marketplace_featured=True,
+            marketplace_use_cases=[
+                "Transform contracts into structured clause records",
+                "Feed downstream compliance or review workflows",
+                "Show selective tool use inside a curated runtime",
+            ],
             package_path="/examples/clause-extractor",
             example_input_path="/examples/clause-extractor/example-input.txt",
             example_output_path="/examples/clause-extractor/example-response.json",
@@ -89,6 +101,18 @@ def _seed_example_agents() -> list[SeedAgentRecord]:
             ),
             input_mode="text",
             output_mode="markdown",
+            marketplace_short_pitch="Fast contract-risk triage for founders, ops leads, and legal teams.",
+            marketplace_price="$0.08 / run",
+            marketplace_trust_badge="Platform verified",
+            marketplace_rating=4.9,
+            marketplace_review_count=26,
+            marketplace_categories=["Legal", "Risk", "Founders"],
+            marketplace_featured=True,
+            marketplace_use_cases=[
+                "Review vendor agreements before redline",
+                "Spot renewal, liability, and subprocessor risks",
+                "Give another assistant a safe escalation target",
+            ],
             package_path="/examples/legal-checker",
             example_input_path="/examples/legal-checker/example-input.txt",
             example_output_path="/examples/legal-checker/example-response.json",
@@ -119,12 +143,16 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
         payload = response.json()
         assert len(payload) == 2
         assert [item["id"] for item in payload] == ["clause-extractor", "legal-checker"]
+        assert payload[0]["marketplace_price"] == "$0.14 / run"
+        assert payload[1]["marketplace_trust_badge"] == "Platform verified"
 
         detail = await client.get("/api/agents/legal-checker")
         assert detail.status_code == 200
         agent = detail.json()
         assert agent["id"] == "legal-checker"
         assert agent["model_provider"] == "openrouter"
+        assert agent["marketplace_short_pitch"].startswith("Fast contract-risk triage")
+        assert agent["marketplace_use_cases"][0] == "Review vendor agreements before redline"
         assert agent["tools"] == []
         assert agent["example_input"] is None
         assert agent["example_output"] is None
@@ -271,6 +299,8 @@ def test_load_agent_packages_builds_local_tool_images(tmp_path: Path) -> None:
     clause_extractor = next(package for package in packages if package.slug == "clause-extractor")
     assert built_images == [("clause-extractor", "0.1.0", "clause_extractor")]
     assert clause_extractor.tools[0].image == "agenthub-local/clause-extractor-clause_extractor:0.1.0"
+    assert clause_extractor.marketplace_price == "$0.14 / run"
+    assert clause_extractor.marketplace_trust_badge == "Platform verified"
 
 
 @pytest.mark.anyio

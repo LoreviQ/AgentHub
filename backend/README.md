@@ -49,6 +49,29 @@ AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agen
 UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run uvicorn backend.main:app --app-dir src --reload
 ```
 
+## MCP Server
+
+The backend now serves two APIs from the same process:
+
+- REST API at `/api`
+- MCP server at `/mcp/`
+
+The MCP server is mounted as a streamable HTTP endpoint and starts automatically
+with the main backend app. Use the normal backend startup command, then connect
+an MCP client to `https://<your-host>/mcp/`.
+
+If you set `AGENTHUB_MCP_BEARER_TOKEN`, clients must send:
+
+```text
+Authorization: Bearer <token>
+```
+
+The MCP server exposes:
+
+- `search_marketplace`
+- `get_agent_details`
+- `invoke_agent`
+
 ## Migrations
 
 ```bash

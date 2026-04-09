@@ -1,11 +1,4 @@
-const DEFAULT_BACKEND_URL = "http://127.0.0.1:8000";
-
-function getBackendUrl(): string {
-  return (process.env.AGENTHUB_BACKEND_URL ?? DEFAULT_BACKEND_URL).replace(
-    /\/$/,
-    "",
-  );
-}
+import { getBackendUrl } from "@/lib/server/mcp-config";
 
 export async function fetchBackend(
   path: string,

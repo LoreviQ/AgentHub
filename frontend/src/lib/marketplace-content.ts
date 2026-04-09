@@ -172,7 +172,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
     description:
       "A display-only marketplace listing showing how creator agents might appear once open publishing exists.",
     longDescription:
-      "This mock listing is intentionally non-functional. It exists to make the marketplace feel fuller while clearly signaling that only two curated agents are live in the MVP.",
+      "This mock listing is intentionally non-functional. It exists to make the marketplace feel fuller while clearly signaling that only two curated agents are live in the Demo.",
     categories: ["Legal", "Negotiation", "Templates"],
     owner: "SignalDraft Labs",
     creatorHandle: "@signaldraft",
@@ -204,7 +204,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
       "Demonstrates what a third-party creator listing could look like after onboarding and publishing exist.",
     howItWorks: [
       "In the future this would be a packaged marketplace submission.",
-      "For the MVP it is a frontend-only card with no live backend execution.",
+      "For the Demo it is a frontend-only card with no live backend execution.",
     ],
     reviews: [
       {
@@ -214,7 +214,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
         quote: "Exactly the kind of specialist I'd want in a future marketplace.",
       },
     ],
-    toolSummary: "Display-only listing. No live runtime attached in the MVP.",
+    toolSummary: "Display-only listing. No live runtime attached in the Demo.",
     displayOnlyReason: "Mock listing for marketplace depth. Not executable in this demo.",
   },
   {
@@ -308,7 +308,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
       "It gives the marketplace the broader ecosystem feel of a future creator economy without confusing which agents are truly live today.",
     howItWorks: [
       "Would eventually package protocol-specific policies and tooling.",
-      "In this MVP it is clearly marked as a display-only marketplace concept.",
+      "In this Demo it is clearly marked as a display-only marketplace concept.",
     ],
     reviews: [
       {
@@ -318,7 +318,7 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
         quote: "Exactly the kind of weird niche agent a real marketplace should surface.",
       },
     ],
-    toolSummary: "Display-only listing. Visual flavor only for the MVP demo.",
+    toolSummary: "Display-only listing. Visual flavor only for the Demo.",
     displayOnlyReason: "Mock listing for marketplace density. Not executable.",
   },
 ];
@@ -327,7 +327,47 @@ export function buildLiveMarketplaceProfile(
   agent: AgentListItem,
   detail?: AgentDetail,
 ): MarketplaceAgentProfile {
-  const seed = liveProfileSeeds[agent.id];
+  const seed =
+    liveProfileSeeds[agent.id] ??
+    ({
+      id: agent.id,
+      name: agent.name,
+      tagline: agent.marketplace_short_pitch ?? agent.description,
+      description: agent.description,
+      longDescription: agent.description,
+      categories:
+        Array.isArray(agent.marketplace_categories) && agent.marketplace_categories.length > 0
+          ? agent.marketplace_categories
+          : ["General"],
+      owner: "AgentHub Creator",
+      creatorHandle: "@agenthub/creator",
+      priceLabel: "Price",
+      priceValue: agent.marketplace_price ?? "Unspecified",
+      costBlurb: "Marketplace-managed pricing for this packaged agent.",
+      rating: agent.marketplace_rating ?? 0,
+      reviewCount: agent.marketplace_review_count ?? 0,
+      runCountLabel: "Live listing",
+      trustLabel: agent.marketplace_trust_badge ?? "Pending review",
+      accent: "cyan",
+      featured: agent.marketplace_featured ?? false,
+      useCases: detail?.marketplace_use_cases ?? [agent.description],
+      examplePrompt: detail?.example_input ?? "Describe the task you want this agent to handle.",
+      whyThisExists:
+        "This live agent was loaded from the backend registry and rendered without a bespoke frontend seed.",
+      howItWorks: [
+        "AgentHub loads the packaged instructions and runtime config from the agent bundle.",
+        "The shared runtime executes the request using the configured model and tools policy.",
+        "The result is returned through the same platform-managed execution path as every other live agent.",
+      ],
+      reviews: [],
+      toolSummary: agent.tools_enabled
+        ? "This live agent has packaged tool support enabled."
+        : "This live agent runs through the shared runtime without custom tools.",
+    } satisfies LiveProfileSeed);
+  const fallbackCategories =
+    Array.isArray(agent.marketplace_categories) && agent.marketplace_categories.length > 0
+      ? agent.marketplace_categories
+      : seed?.categories ?? ["General"];
   const exampleInput = detail?.example_input ?? seed.examplePrompt;
   const exampleOutput =
     detail?.example_output ??
@@ -338,6 +378,14 @@ export function buildLiveMarketplaceProfile(
 
   return {
     ...seed,
+    tagline: agent.marketplace_short_pitch ?? seed.tagline,
+    categories: fallbackCategories,
+    priceValue: agent.marketplace_price ?? seed.priceValue,
+    rating: agent.marketplace_rating ?? seed.rating,
+    reviewCount: agent.marketplace_review_count ?? seed.reviewCount,
+    trustLabel: agent.marketplace_trust_badge ?? seed.trustLabel,
+    featured: agent.marketplace_featured ?? seed.featured,
+    useCases: detail?.marketplace_use_cases ?? seed.useCases,
     slug: agent.id,
     source: "live",
     statusLabel: "Live in Demo",

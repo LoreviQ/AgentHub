@@ -1,0 +1,106 @@
+# AgentHub MCP smoke tests for the VS Code REST Client extension.
+# Start the backend first, then send these requests to the mounted MCP endpoint.
+#
+# Notes:
+# - The MCP endpoint uses streamable HTTP at `/mcp/`.
+# - Responses are typically returned as `text/event-stream`.
+# - If `AGENTHUB_MCP_BEARER_TOKEN` is set, add:
+#   Authorization: Bearer <token>
+
+@host = http://127.0.0.1:8000
+@mcp = {{host}}/mcp/
+@protocolVersion = 2025-03-26
+
+###
+# Initialize MCP session
+POST {{mcp}}
+Accept: application/json, text/event-stream
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "{{protocolVersion}}",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "rest-client",
+      "version": "0.1.0"
+    }
+  }
+}
+
+###
+# List available tools
+POST {{mcp}}
+Accept: application/json, text/event-stream
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/list",
+  "params": {}
+}
+
+###
+# Search the marketplace
+POST {{mcp}}
+Accept: application/json, text/event-stream
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "search_marketplace",
+    "arguments": {
+      "query": "legal contract review",
+      "filters": {
+        "limit": 5
+      }
+    }
+  }
+}
+
+###
+# Get one agent's full contract
+POST {{mcp}}
+Accept: application/json, text/event-stream
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "get_agent_details",
+    "arguments": {
+      "agent_id": "legal-checker"
+    }
+  }
+}
+
+###
+# Invoke one live agent
+POST {{mcp}}
+Accept: application/json, text/event-stream
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "invoke_agent",
+    "arguments": {
+      "agent_id": "legal-checker",
+      "input": "Review this clause for renewal and liability risk: The agreement renews automatically each year unless either party gives notice 60 days before renewal. Vendor liability is capped at fees paid in the prior 3 months.",
+      "options": {
+        "include_run_metadata": true
+      }
+    }
+  }
+}

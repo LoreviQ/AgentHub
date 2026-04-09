@@ -34,6 +34,9 @@ export default function LoginPage() {
           <CardTitle>Sign in to AgentHub</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <p className="text-sm text-zinc-400">
+            Demo mode is enabled. Any email and password will create a mock session.
+          </p>
           <Input value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input
             type="password"

@@ -39,6 +39,14 @@ class SeedAgentRecord:
     runtime_execution_notes: str | None
     input_mode: str
     output_mode: str
+    marketplace_short_pitch: str
+    marketplace_price: str
+    marketplace_trust_badge: str
+    marketplace_rating: float
+    marketplace_review_count: int
+    marketplace_categories: list[str]
+    marketplace_featured: bool
+    marketplace_use_cases: list[str]
     package_path: str
     example_input_path: str | None
     example_output_path: str | None
@@ -87,6 +95,14 @@ def hydrate_agent_record(record: AgentRecord, agent: SeedAgentRecord) -> None:
     record.runtime_execution_notes = agent.runtime_execution_notes
     record.input_mode = agent.input_mode
     record.output_mode = agent.output_mode
+    record.marketplace_short_pitch = agent.marketplace_short_pitch
+    record.marketplace_price = agent.marketplace_price
+    record.marketplace_trust_badge = agent.marketplace_trust_badge
+    record.marketplace_rating = agent.marketplace_rating
+    record.marketplace_review_count = agent.marketplace_review_count
+    record.marketplace_categories = agent.marketplace_categories
+    record.marketplace_featured = agent.marketplace_featured
+    record.marketplace_use_cases = agent.marketplace_use_cases
     record.package_path = agent.package_path
     record.example_input_path = agent.example_input_path
     record.example_output_path = agent.example_output_path

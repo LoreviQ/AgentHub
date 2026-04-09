@@ -44,6 +44,13 @@ export const api = {
       billing: { creditsBalance: number; monthlySpend: number; totalInvocations: number; currentPlan: string };
       invocations: Invocation[];
       apiKeys: { id: string; name: string; keyPreview: string; createdAt: string; lastUsedAt?: string }[];
+      mcp: {
+        transport: string;
+        serverUrl: string;
+        bearerTokenEnvVar: string;
+        backendUrlEnvVar: string;
+        addressEnvVar: string;
+      };
     }>("/api/dashboard"),
   createApiKey: (name: string) =>
     jsonFetch<{ id: string; name: string; keyPreview: string; createdAt: string }>("/api/keys", {
