@@ -146,7 +146,7 @@ async def test_search_marketplace_tool_returns_ranked_results(
     _run_migrations(tmp_path, get_settings().database_url)
     sync_registry(engine=get_engine(), agents=_seed_example_agents())
 
-    from backend.mcp_server import create_mcp_server
+    from backend.services.mcp_server import create_mcp_server
     from backend.services.marketplace import MarketplaceFilters
 
     server = create_mcp_server()
@@ -171,7 +171,7 @@ async def test_get_agent_details_tool_returns_contract(tmp_path: Path, monkeypat
     _run_migrations(tmp_path, get_settings().database_url)
     sync_registry(engine=get_engine(), agents=_seed_example_agents())
 
-    from backend.mcp_server import create_mcp_server
+    from backend.services.mcp_server import create_mcp_server
 
     server = create_mcp_server()
     payload = await _invoke_tool(server, "get_agent_details", agent_id="legal-checker")
@@ -192,7 +192,7 @@ async def test_invoke_agent_tool_executes_agent(tmp_path: Path, monkeypatch) -> 
     _run_migrations(tmp_path, get_settings().database_url)
     sync_registry(engine=get_engine(), agents=_seed_example_agents())
 
-    from backend.mcp_server import create_mcp_server
+    from backend.services.mcp_server import create_mcp_server
     from backend.services.marketplace import InvocationOptions
     from backend.services import execution
 

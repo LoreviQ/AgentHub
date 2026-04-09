@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.db.models import AgentRecord
+from backend.db.queries import get_agent_record_by_slug, list_agent_records
 from backend.schemas.agent import AgentToolResponse
 from backend.schemas.execution import AgentExecuteRequest
 from backend.services.execution import AgentExecutionError, execute_agent
@@ -168,7 +169,7 @@ def search_marketplace_records(
     filters: MarketplaceFilters,
 ) -> list[dict[str, Any]]:
     query_tokens = _tokenize(query)
-    records = session.query(AgentRecord).order_by(AgentRecord.name.asc()).all()
+    records = list_agent_records(session=session)
     ranked: list[tuple[int, AgentRecord, MarketplaceMeta]] = []
 
     for record in records:
@@ -212,11 +213,7 @@ def get_agent_marketplace_details(
     session: Session,
     agent_id: str,
 ) -> dict[str, Any] | None:
-    record = (
-        session.query(AgentRecord)
-        .filter(AgentRecord.slug == agent_id)
-        .one_or_none()
-    )
+    record = get_agent_record_by_slug(session=session, agent_id=agent_id)
     if record is None:
         return None
 
@@ -291,11 +288,7 @@ async def invoke_marketplace_agent(
     user_input: str,
     options: InvocationOptions,
 ) -> dict[str, Any] | None:
-    record = (
-        session.query(AgentRecord)
-        .filter(AgentRecord.slug == agent_id)
-        .one_or_none()
-    )
+    record = get_agent_record_by_slug(session=session, agent_id=agent_id)
     if record is None:
         return None
 

@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
-from backend.db.models import AgentRecord
+from backend.db.queries import get_agent_record_by_slug, list_agent_records
 from backend.db.session import get_engine
 from backend.schemas.agent import (
     AgentDetailResponse,
@@ -43,7 +43,7 @@ def _read_optional_json(path_value: str | None) -> tuple[Any | None, str | None]
 @router.get("/agents", response_model=list[AgentListItemResponse])
 async def list_agents() -> list[AgentListItemResponse]:
     with Session(get_engine()) as session:
-        records = session.query(AgentRecord).order_by(AgentRecord.name.asc()).all()
+        records = list_agent_records(session=session)
         return [
             AgentListItemResponse(
                 id=record.slug,
@@ -70,11 +70,7 @@ async def list_agents() -> list[AgentListItemResponse]:
 @router.get("/agents/{agent_id}", response_model=AgentDetailResponse)
 async def get_agent(agent_id: str) -> AgentDetailResponse:
     with Session(get_engine()) as session:
-        record = (
-            session.query(AgentRecord)
-            .filter(AgentRecord.slug == agent_id)
-            .one_or_none()
-        )
+        record = get_agent_record_by_slug(session=session, agent_id=agent_id)
         if record is None:
             raise HTTPException(status_code=404, detail="Agent not found")
 
@@ -133,11 +129,7 @@ async def execute_agent_route(
     agent_id: str, request: AgentExecuteRequest
 ) -> AgentExecuteResponse:
     with Session(get_engine()) as session:
-        record = (
-            session.query(AgentRecord)
-            .filter(AgentRecord.slug == agent_id)
-            .one_or_none()
-        )
+        record = get_agent_record_by_slug(session=session, agent_id=agent_id)
         if record is None:
             raise HTTPException(status_code=404, detail="Agent not found")
 

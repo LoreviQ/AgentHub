@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from backend.api.routes.agents import router as agents_router
 from backend.core.config import get_settings
-from backend.mcp_server import create_mcp_server
+from backend.services.mcp_server import create_mcp_server
 
 
 def create_app() -> FastAPI:
