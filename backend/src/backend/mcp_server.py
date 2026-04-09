@@ -101,7 +101,3 @@ def create_mcp_server() -> FastMCP:
         }
 
     return server
-
-
-def main() -> None:
-    create_mcp_server().run()

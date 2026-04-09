@@ -9,6 +9,7 @@ from backend.core.config import get_settings
 from backend.db.session import get_engine, reset_database_state
 from backend.services.execution import AgentExecutionResult
 from backend.services.registry import SeedAgentRecord, SeedAgentTool, sync_registry
+from httpx import ASGITransport, AsyncClient
 
 
 def _get_registered_tool(server, name: str):
@@ -233,3 +234,67 @@ async def test_invoke_agent_tool_executes_agent(tmp_path: Path, monkeypatch) -> 
     assert payload["run"]["status"] == "completed"
     assert payload["run"]["output"] == "## Concerns\nAuto-renewal looks one-sided."
     assert "started_at" not in payload["run"]
+
+
+@pytest.mark.anyio
+async def test_mcp_http_endpoint_is_mounted_under_backend_app(
+    tmp_path: Path, monkeypatch
+) -> None:
+    db_path = tmp_path / "test.db"
+    monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
+    reset_database_state()
+    get_settings.cache_clear()
+    _run_migrations(tmp_path, get_settings().database_url)
+    sync_registry(engine=get_engine(), agents=_seed_example_agents())
+
+    from backend.main import create_app
+
+    app = create_app()
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport, base_url="http://testserver"
+        ) as client:
+            response = await client.post(
+                "/mcp/",
+                headers={"accept": "application/json, text/event-stream"},
+                json={},
+    )
+
+    assert response.status_code == 400
+    assert "Validation error" in response.json()["error"]["message"]
+
+
+@pytest.mark.anyio
+async def test_mcp_http_endpoint_enforces_optional_bearer_token(
+    tmp_path: Path, monkeypatch
+) -> None:
+    db_path = tmp_path / "test.db"
+    monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
+    monkeypatch.setenv("AGENTHUB_MCP_BEARER_TOKEN", "secret-token")
+    reset_database_state()
+    get_settings.cache_clear()
+    _run_migrations(tmp_path, get_settings().database_url)
+    sync_registry(engine=get_engine(), agents=_seed_example_agents())
+
+    from backend.main import create_app
+
+    app = create_app()
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport, base_url="http://testserver"
+        ) as client:
+            missing = await client.get("/mcp/")
+            wrong = await client.get(
+                "/mcp/",
+                headers={"authorization": "Bearer wrong-token"},
+            )
+            allowed = await client.get(
+                "/mcp/",
+                headers={"authorization": "Bearer secret-token"},
+            )
+
+    assert missing.status_code == 401
+    assert wrong.status_code == 401
+    assert allowed.status_code == 405

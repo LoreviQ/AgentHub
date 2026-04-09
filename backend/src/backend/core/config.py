@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     app_name: str = "AgentHub Backend"
     api_prefix: str = "/api"
+    mcp_path: str = "/mcp"
+    mcp_bearer_token: str | None = None
     database_url: str = Field()
 
 

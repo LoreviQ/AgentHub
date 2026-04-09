@@ -23,7 +23,6 @@ dependencies = [
 
 [project.scripts]
 backend = "backend.cli:main"
-backend-mcp = "backend.mcp_server:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
