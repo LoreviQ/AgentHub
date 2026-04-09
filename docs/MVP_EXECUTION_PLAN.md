@@ -871,7 +871,22 @@ Exit criteria:
 
 Use /frontend as inspiration but do not feel limited to choices made. It was a quick non functional mockup and should not restrict design identiy. 
 
-### Step 8: Deploy To Hetzner
+### Step 8: Create MCP Server
+
+Deliverables:
+- MCP server with 3 tools:
+  - search_marketplace(query, filters?)
+    - Returns top agents with agent_id, name, short pitch, price, trust badge, rating/review summary, and a short “why this matched” snippet.
+  - get_agent_details(agent_id)
+    - Returns the full contract including price, schema, etc
+  - invoke_agent(agent_id, input, options?)
+    - The assistant passes structured args only.
+    - Agent hub routes request to the appropraite agent and returns the result
+
+Exit criteria:
+- a user can add the mcp server to their personal ai assistant and use it to browse the marketplace and execute arbitrary agents
+
+### Step 9: Deploy To Hetzner
 
 Deliverables:
 
@@ -891,7 +906,7 @@ Exit criteria:
 
 - the demo is accessible externally and both agents can be invoked live
 
-### Step 9: Create The Separate Assistant Demo
+### Step 10: Create The Separate Assistant Demo
 
 Deliverables:
 
