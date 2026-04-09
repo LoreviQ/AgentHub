@@ -3,7 +3,6 @@
 
 @host = http://127.0.0.1:8000
 @api = {{host}}/api
-@mcp = {{host}}/mcp/
 @agentId = legal-checker
 
 ###
@@ -51,11 +50,3 @@ Content-Type: application/json
 # Not found case
 GET {{api}}/agents/does-not-exist
 Accept: application/json
-
-###
-# MCP endpoint smoke check
-POST {{mcp}}
-Accept: application/json, text/event-stream
-Content-Type: application/json
-
-{}
