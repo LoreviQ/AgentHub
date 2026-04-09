@@ -327,7 +327,47 @@ export function buildLiveMarketplaceProfile(
   agent: AgentListItem,
   detail?: AgentDetail,
 ): MarketplaceAgentProfile {
-  const seed = liveProfileSeeds[agent.id];
+  const seed =
+    liveProfileSeeds[agent.id] ??
+    ({
+      id: agent.id,
+      name: agent.name,
+      tagline: agent.marketplace_short_pitch ?? agent.description,
+      description: agent.description,
+      longDescription: agent.description,
+      categories:
+        Array.isArray(agent.marketplace_categories) && agent.marketplace_categories.length > 0
+          ? agent.marketplace_categories
+          : ["General"],
+      owner: "AgentHub Creator",
+      creatorHandle: "@agenthub/creator",
+      priceLabel: "Price",
+      priceValue: agent.marketplace_price ?? "Unspecified",
+      costBlurb: "Marketplace-managed pricing for this packaged agent.",
+      rating: agent.marketplace_rating ?? 0,
+      reviewCount: agent.marketplace_review_count ?? 0,
+      runCountLabel: "Live listing",
+      trustLabel: agent.marketplace_trust_badge ?? "Pending review",
+      accent: "cyan",
+      featured: agent.marketplace_featured ?? false,
+      useCases: detail?.marketplace_use_cases ?? [agent.description],
+      examplePrompt: detail?.example_input ?? "Describe the task you want this agent to handle.",
+      whyThisExists:
+        "This live agent was loaded from the backend registry and rendered without a bespoke frontend seed.",
+      howItWorks: [
+        "AgentHub loads the packaged instructions and runtime config from the agent bundle.",
+        "The shared runtime executes the request using the configured model and tools policy.",
+        "The result is returned through the same platform-managed execution path as every other live agent.",
+      ],
+      reviews: [],
+      toolSummary: agent.tools_enabled
+        ? "This live agent has packaged tool support enabled."
+        : "This live agent runs through the shared runtime without custom tools.",
+    } satisfies LiveProfileSeed);
+  const fallbackCategories =
+    Array.isArray(agent.marketplace_categories) && agent.marketplace_categories.length > 0
+      ? agent.marketplace_categories
+      : seed?.categories ?? ["General"];
   const exampleInput = detail?.example_input ?? seed.examplePrompt;
   const exampleOutput =
     detail?.example_output ??
@@ -338,13 +378,13 @@ export function buildLiveMarketplaceProfile(
 
   return {
     ...seed,
-    tagline: agent.marketplace_short_pitch,
-    categories: agent.marketplace_categories,
-    priceValue: agent.marketplace_price,
-    rating: agent.marketplace_rating,
-    reviewCount: agent.marketplace_review_count,
-    trustLabel: agent.marketplace_trust_badge,
-    featured: agent.marketplace_featured,
+    tagline: agent.marketplace_short_pitch ?? seed.tagline,
+    categories: fallbackCategories,
+    priceValue: agent.marketplace_price ?? seed.priceValue,
+    rating: agent.marketplace_rating ?? seed.rating,
+    reviewCount: agent.marketplace_review_count ?? seed.reviewCount,
+    trustLabel: agent.marketplace_trust_badge ?? seed.trustLabel,
+    featured: agent.marketplace_featured ?? seed.featured,
     useCases: detail?.marketplace_use_cases ?? seed.useCases,
     slug: agent.id,
     source: "live",
