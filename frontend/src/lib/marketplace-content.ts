@@ -323,62 +323,11 @@ export const displayOnlyAgents: DisplayOnlyProfile[] = [
   },
 ];
 
-function normalizeStringArray(value: unknown, fallback: string[]): string[] {
-  if (!Array.isArray(value)) {
-    return fallback;
-  }
-
-  const normalized = value
-    .filter((entry): entry is string => typeof entry === "string")
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-
-  return normalized.length > 0 ? normalized : fallback;
-}
-
-function createFallbackLiveSeed(agent: AgentListItem): LiveProfileSeed {
-  const categories = normalizeStringArray(agent.marketplace_categories, ["General"]);
-
-  return {
-    id: agent.id,
-    name: agent.name,
-    tagline: agent.marketplace_short_pitch || agent.description,
-    description: agent.description,
-    longDescription: agent.description,
-    categories,
-    owner: "AgentHub Creator",
-    creatorHandle: "@agenthub/live",
-    priceLabel: "Live price",
-    priceValue: agent.marketplace_price || "Unspecified",
-    costBlurb: "Live marketplace listing loaded from the AgentHub backend.",
-    rating: agent.marketplace_rating ?? 0,
-    reviewCount: agent.marketplace_review_count ?? 0,
-    runCountLabel: agent.tools_enabled ? "Tool-enabled live run" : "Live run",
-    trustLabel: agent.marketplace_trust_badge || "Unspecified",
-    accent: "cyan",
-    featured: Boolean(agent.marketplace_featured),
-    useCases: [agent.description],
-    examplePrompt: `Run ${agent.name} on this input.`,
-    whyThisExists:
-      "This live listing was loaded from the backend without a curated frontend seed yet.",
-    howItWorks: [
-      "AgentHub loads the packaged agent configuration from the backend registry.",
-      "The shared runtime executes the selected model and returns the result through the marketplace API.",
-    ],
-    reviews: [],
-    toolSummary: agent.tools_enabled
-      ? "This live agent has packaged tool support enabled."
-      : "This live agent runs without packaged tools.",
-  };
-}
-
 export function buildLiveMarketplaceProfile(
   agent: AgentListItem,
   detail?: AgentDetail,
 ): MarketplaceAgentProfile {
-  const seed = liveProfileSeeds[agent.id] ?? createFallbackLiveSeed(agent);
-  const categories = normalizeStringArray(agent.marketplace_categories, seed.categories);
-  const useCases = normalizeStringArray(detail?.marketplace_use_cases, seed.useCases);
+  const seed = liveProfileSeeds[agent.id];
   const exampleInput = detail?.example_input ?? seed.examplePrompt;
   const exampleOutput =
     detail?.example_output ??
@@ -390,13 +339,13 @@ export function buildLiveMarketplaceProfile(
   return {
     ...seed,
     tagline: agent.marketplace_short_pitch,
-    categories,
+    categories: agent.marketplace_categories,
     priceValue: agent.marketplace_price,
     rating: agent.marketplace_rating,
     reviewCount: agent.marketplace_review_count,
     trustLabel: agent.marketplace_trust_badge,
     featured: agent.marketplace_featured,
-    useCases,
+    useCases: detail?.marketplace_use_cases ?? seed.useCases,
     slug: agent.id,
     source: "live",
     statusLabel: "Live in Demo",

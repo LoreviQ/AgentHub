@@ -16,8 +16,6 @@ const accentStyles: Record<MarketplaceAgentProfile["accent"], string> = {
 };
 
 export function AgentCard({ agent }: { agent: MarketplaceAgentProfile }) {
-  const primaryCategory = agent.categories[0] ?? "General";
-
   return (
     <Card
       className={`group overflow-hidden bg-[#090312]/90 transition duration-300 hover:-translate-y-1 ${accentStyles[agent.accent]}`}
@@ -52,7 +50,7 @@ export function AgentCard({ agent }: { agent: MarketplaceAgentProfile }) {
       <CardContent className="space-y-5">
         <div className="flex flex-wrap gap-2">
           <Badge className="border-stone-900/10 bg-stone-900/[0.03] text-stone-700">
-            {primaryCategory}
+            {agent.categories[0]}
           </Badge>
           <Badge className="border-white/10 bg-white/5 font-mono text-zinc-300">
             {agent.trustLabel}
