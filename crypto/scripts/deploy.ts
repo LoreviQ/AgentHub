@@ -8,10 +8,11 @@ const { viem } = await network.connect({
 
 console.log(`Deploying Dummy to etherlink with message: "${message}"`);
 
-const dummy = await viem.deployContract("Dummy", [message]);
+const { contract: dummy, deploymentTransaction } =
+  await viem.sendDeploymentTransaction("Dummy", [message]);
 const publicClient = await viem.getPublicClient();
 const receipt = await publicClient.waitForTransactionReceipt({
-  hash: dummy.deploymentTransaction.hash,
+  hash: deploymentTransaction.hash,
 });
 
 console.log("Dummy deployed successfully");

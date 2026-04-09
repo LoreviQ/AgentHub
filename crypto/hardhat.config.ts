@@ -1,9 +1,10 @@
 import { createRequire } from "node:module";
 import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
-import { configVariable, defineConfig } from "hardhat/config";
+import { defineConfig } from "hardhat/config";
 import "dotenv/config";
 
 const require = createRequire(import.meta.url);
+const privateKey = process.env.PRIVATE_KEY?.trim();
 
 export default defineConfig({
   plugins: [hardhatToolboxViemPlugin],
@@ -15,8 +16,8 @@ export default defineConfig({
     etherlink: {
       type: "http",
       chainType: "l1",
-      url: "https://node.ghostnet.etherlink.com",
-      accounts: [configVariable("PRIVATE_KEY")],
+      url: "https://node.shadownet.etherlink.com",
+      accounts: privateKey ? [privateKey] : [],
     },
   },
 });
