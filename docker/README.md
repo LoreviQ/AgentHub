@@ -36,16 +36,13 @@ For deployment on Hetzner/Coolify, the preferred path is:
 
 That gives us a clean bridge from local demo packaging to production-friendly image distribution without changing the runtime contract.
 
-## Production Baseline Stack
+## Production Compose Pair
 
-The repo also includes [docker-compose.prod.yml](/home/lore/workspace/AgentHub/docker-compose.prod.yml)
-for a conservative external deployment with:
+The repo now uses two deployment-oriented compose files:
 
-- PostgreSQL
-- backend API
-- frontend
+- [docker-compose.build.yml](/home/lore/workspace/AgentHub/docker-compose.build.yml) to build app images on the server
+- [docker-compose.deploy.yml](/home/lore/workspace/AgentHub/docker-compose.deploy.yml) to paste into Coolify
 
-It intentionally does not run migrations or the agent loader automatically. See
-[PROD_DOCKER_DEPLOYMENT.md](/home/lore/workspace/AgentHub/docs/PROD_DOCKER_DEPLOYMENT.md)
+See [PROD_DOCKER_DEPLOYMENT.md](/home/lore/workspace/AgentHub/docs/PROD_DOCKER_DEPLOYMENT.md)
 for the runbook and the caveat around loading tool-enabled agents into a remote
 environment.

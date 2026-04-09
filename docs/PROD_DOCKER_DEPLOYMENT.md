@@ -1,15 +1,14 @@
 # Production Docker Deployment
 
 This repo now includes a conservative production stack in
-`docker-compose.prod.yml`.
+`docker-compose.build.yml` and `docker-compose.deploy.yml`.
 
-It is intentionally limited to:
+The intended split is:
 
-- PostgreSQL
-- the FastAPI backend
-- the Next.js frontend
+- `docker-compose.build.yml`: build the backend and frontend images on the server
+- `docker-compose.deploy.yml`: paste into Coolify so it deploys those images
 
-It does not automatically:
+The deployment setup still does not automatically:
 
 - run Alembic migrations
 - load the demo agents
@@ -18,25 +17,40 @@ It does not automatically:
 
 That keeps the first external deployment safer and easier to reason about.
 
-## Bring Up The Blank Stack
+## Build The Images On The Server
 
 1. Copy `.env.prod.example` to `.env.prod`.
 2. Fill in at least:
-   - `POSTGRES_PASSWORD`
-   - `OPENROUTER_API_KEY`
    - `NEXT_PUBLIC_GIT_REPO_URL`
-   - `NEXT_MCP_ADDRESS`
+   - `NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL`
 3. Start the stack:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up --build -d
+docker compose --env-file .env.prod -f docker-compose.build.yml build
 ```
 
-The services will be reachable on:
+That produces the local server images referenced by default in the deploy file:
 
-- frontend: `http://<host>:3000`
-- backend: `http://<host>:8000`
-- backend healthcheck: `http://<host>:8000/health`
+- `agenthub-backend:local`
+- `agenthub-frontend:local`
+
+## Paste The Deploy Compose Into Coolify
+
+Create a new `Docker Compose Empty` service in Coolify and paste in
+`docker-compose.deploy.yml`.
+
+Then set the Coolify environment values, especially:
+
+- `POSTGRES_PASSWORD`
+- `OPENROUTER_API_KEY`
+- `NEXT_PUBLIC_GIT_REPO_URL`
+- `NEXT_MCP_ADDRESS`
+- `NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL`
+
+If you keep the default image names, Coolify should use:
+
+- `agenthub-backend:local`
+- `agenthub-frontend:local`
 
 ## Recommended Public Domains
 
@@ -55,6 +69,10 @@ NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL=https://agenthubapi.oliver.tj
 
 The frontend should still talk to the backend over the internal Docker network.
 Only public-facing URLs should point at `agenthubapi.oliver.tj`.
+
+The backend service in `docker-compose.deploy.yml` mounts
+`/var/run/docker.sock` so the tool-enabled demo agent can run its packaged tool
+container on the server.
 
 ## Important Loader Caveat
 

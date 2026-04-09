@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-agenthub}
       POSTGRES_USER: ${POSTGRES_USER:-agenthub}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your env file}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in Coolify}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,9 +15,7 @@ services:
       retries: 10
 
   backend:
-    build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
+    image: ${AGENTHUB_BACKEND_IMAGE:-agenthub-backend:local}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -29,26 +27,23 @@ services:
       AGENTHUB_MCP_BEARER_TOKEN: ${AGENTHUB_MCP_BEARER_TOKEN:-}
       AGENTHUB_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-agenthub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-agenthub}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      AGENTHUB_TOOL_IMAGE_TAG_PREFIX: ${AGENTHUB_TOOL_IMAGE_TAG_PREFIX:-agenthub-local}
+      AGENTHUB_TOOL_IMAGE_TAG_PREFIX: ${AGENTHUB_TOOL_IMAGE_TAG_PREFIX:-agenthub}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
   frontend:
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
-      args:
-        NEXT_PUBLIC_GIT_REPO_URL: ${NEXT_PUBLIC_GIT_REPO_URL:-}
-        NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-}
+    image: ${AGENTHUB_FRONTEND_IMAGE:-agenthub-frontend:local}
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_started
     environment:
       AGENTHUB_BACKEND_URL: ${AGENTHUB_BACKEND_URL:-http://backend:8000}
-      NEXT_MCP_ADDRESS: ${NEXT_MCP_ADDRESS:-http://backend:8000/mcp/}
+      NEXT_MCP_ADDRESS: ${NEXT_MCP_ADDRESS:-https://agenthubapi.oliver.tj/mcp/}
       NEXT_PUBLIC_GIT_REPO_URL: ${NEXT_PUBLIC_GIT_REPO_URL:-}
-      NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-}
+      NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-https://agenthubapi.oliver.tj}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
 
