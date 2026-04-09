@@ -1,5 +1,7 @@
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -35,7 +37,7 @@ def reset_database_state() -> None:
     _session_factory = None
 
 
-def get_session() -> Generator[Session, None, None]:
+async def get_session() -> AsyncGenerator[Session, None]:
     global _session_factory
     if _session_factory is None:
         get_engine()
@@ -45,3 +47,6 @@ def get_session() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+DbSession = Annotated[Session, Depends(get_session)]
