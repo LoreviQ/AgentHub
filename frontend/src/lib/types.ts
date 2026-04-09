@@ -6,6 +6,13 @@ export type AgentListItem = {
   id: string;
   name: string;
   description: string;
+  marketplace_short_pitch: string;
+  marketplace_price: string;
+  marketplace_trust_badge: string;
+  marketplace_rating: number;
+  marketplace_review_count: number;
+  marketplace_categories: string[];
+  marketplace_featured: boolean;
   version: string;
   model_provider: string;
   model_name: string;
@@ -25,6 +32,7 @@ export type AgentTool = {
 };
 
 export type AgentDetail = AgentListItem & {
+  marketplace_use_cases: string[];
   schema_version: number;
   instructions_markdown: string;
   public_instructions: string;

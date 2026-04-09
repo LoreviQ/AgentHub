@@ -338,6 +338,14 @@ export function buildLiveMarketplaceProfile(
 
   return {
     ...seed,
+    tagline: agent.marketplace_short_pitch,
+    categories: agent.marketplace_categories,
+    priceValue: agent.marketplace_price,
+    rating: agent.marketplace_rating,
+    reviewCount: agent.marketplace_review_count,
+    trustLabel: agent.marketplace_trust_badge,
+    featured: agent.marketplace_featured,
+    useCases: detail?.marketplace_use_cases ?? seed.useCases,
     slug: agent.id,
     source: "live",
     statusLabel: "Live in Demo",

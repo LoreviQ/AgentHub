@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.18.4",
     "fastapi>=0.135.3",
+    "fastmcp>=3.2.0",
     "jsonschema>=4.26.0",
     "pydantic-ai-slim[openai]>=0.0.55",
     "psycopg[binary]>=3.3.3",
@@ -22,6 +23,7 @@ dependencies = [
 
 [project.scripts]
 backend = "backend.cli:main"
+backend-mcp = "backend.mcp_server:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

@@ -49,6 +49,20 @@ AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agen
 UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run uvicorn backend.main:app --app-dir src --reload
 ```
 
+## MCP Server
+
+```bash
+cd /home/lore/workspace/AgentHub/backend
+AGENTHUB_DATABASE_URL=postgresql+psycopg://agenthub:agenthub@localhost:5432/agenthub \
+UV_CACHE_DIR=/tmp/uv-cache ~/.local/bin/uv run backend-mcp
+```
+
+This starts the AgentHub MCP server over the default stdio transport. The server exposes:
+
+- `search_marketplace`
+- `get_agent_details`
+- `invoke_agent`
+
 ## Migrations
 
 ```bash

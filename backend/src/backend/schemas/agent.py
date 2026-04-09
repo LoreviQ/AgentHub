@@ -17,6 +17,13 @@ class AgentListItemResponse(BaseModel):
     id: str
     name: str
     description: str
+    marketplace_short_pitch: str
+    marketplace_price: str
+    marketplace_trust_badge: str
+    marketplace_rating: float
+    marketplace_review_count: int
+    marketplace_categories: list[str]
+    marketplace_featured: bool
     version: str
     model_provider: str
     model_name: str
@@ -29,6 +36,14 @@ class AgentDetailResponse(BaseModel):
     id: str
     name: str
     description: str
+    marketplace_short_pitch: str
+    marketplace_price: str
+    marketplace_trust_badge: str
+    marketplace_rating: float
+    marketplace_review_count: int
+    marketplace_categories: list[str]
+    marketplace_featured: bool
+    marketplace_use_cases: list[str]
     version: str
     schema_version: int
     instructions_markdown: str

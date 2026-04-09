@@ -123,6 +123,12 @@ def load_agent_packages(
                 runtime_execution_notes=config.runtime.execution_notes,
                 input_mode=config.io.input_mode,
                 output_mode=config.io.output_mode,
+                **build_marketplace_seed(
+                    agent_id=config.id,
+                    agent_name=config.name,
+                    description=config.description,
+                    tools_enabled=config.tools.enabled,
+                ),
                 package_path=str(directory),
                 example_input_path=_optional_file(directory / "example-input.txt"),
                 example_output_path=_optional_file(
@@ -154,6 +160,59 @@ def load_agent_packages(
         )
 
     return packages
+
+
+def build_marketplace_seed(
+    *,
+    agent_id: str,
+    agent_name: str,
+    description: str,
+    tools_enabled: bool,
+) -> dict[str, object]:
+    demo_overrides: dict[str, dict[str, object]] = {
+        "legal-checker": {
+            "marketplace_short_pitch": "Fast contract-risk triage for founders, ops leads, and legal teams.",
+            "marketplace_price": "$0.08 / run",
+            "marketplace_trust_badge": "Platform verified",
+            "marketplace_rating": 4.9,
+            "marketplace_review_count": 26,
+            "marketplace_categories": ["Legal", "Risk", "Founders"],
+            "marketplace_featured": True,
+            "marketplace_use_cases": [
+                "Review vendor agreements before redline",
+                "Spot renewal, liability, and subprocessor risks",
+                "Give another assistant a safe escalation target",
+            ],
+        },
+        "clause-extractor": {
+            "marketplace_short_pitch": "Structured clause extraction with optional packaged tool support.",
+            "marketplace_price": "$0.14 / run",
+            "marketplace_trust_badge": "Platform verified",
+            "marketplace_rating": 4.8,
+            "marketplace_review_count": 18,
+            "marketplace_categories": ["Legal", "Extraction", "Structured Data"],
+            "marketplace_featured": True,
+            "marketplace_use_cases": [
+                "Transform contracts into structured clause records",
+                "Feed downstream compliance or review workflows",
+                "Show selective tool use inside a curated runtime",
+            ],
+        },
+    }
+    if agent_id in demo_overrides:
+        return demo_overrides[agent_id]
+
+    default_price = "$0.14 / run" if tools_enabled else "$0.08 / run"
+    return {
+        "marketplace_short_pitch": description,
+        "marketplace_price": default_price,
+        "marketplace_trust_badge": "Pending review",
+        "marketplace_rating": 0.0,
+        "marketplace_review_count": 0,
+        "marketplace_categories": ["General"],
+        "marketplace_featured": False,
+        "marketplace_use_cases": [f"Use {agent_name} for {description.lower()}"],
+    }
 
 
 def _optional_file(*paths: Path) -> str | None:
