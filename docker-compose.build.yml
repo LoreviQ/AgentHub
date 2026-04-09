@@ -43,6 +43,7 @@ services:
       args:
         NEXT_PUBLIC_GIT_REPO_URL: ${NEXT_PUBLIC_GIT_REPO_URL:-}
         NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-}
+        NEXT_MCP_ADDRESS: ${NEXT_MCP_ADDRESS:-}
     restart: unless-stopped
     depends_on:
       backend:
