@@ -1,7 +1,29 @@
-# Sample Hardhat 3 Beta Project (minimal)
+# AgentHub Etherlink Demo Payments
 
-This project has a minimal setup of Hardhat 3 Beta, without any plugins.
+This package holds the hackathon-grade Etherlink payment demo contract and helper scripts.
 
-## What's included?
+## Commands
 
-The project includes native support for TypeScript, Hardhat scripts, tasks, and support for Solidity compilation and tests.
+```bash
+cd crypto
+npm run build
+npm run deploy:etherlink
+npm run settle:etherlink
+```
+
+## Required environment
+
+`PRIVATE_KEY`
+Wallet used to deploy the contract and submit settlement transactions.
+
+`PAYMENT_CONTRACT_ADDRESS`
+Deployed `DemoAgentPayments` contract address used by `settle:etherlink`.
+
+`PAYMENT_RECIPIENT_ADDRESS`
+Recipient wallet for the settlement transaction.
+
+`PAYMENT_AMOUNT_ATOMIC`
+Amount in Etherlink native-token atomic units. Etherlink XTZ uses 18 decimals.
+
+`PAYMENT_RUN_ID`
+Optional AgentHub run id used in the emitted event memo.

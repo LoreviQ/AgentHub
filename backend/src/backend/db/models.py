@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
+    BigInteger,
     JSON,
     Boolean,
     DateTime,
@@ -41,6 +42,14 @@ class AgentRecord(Base):
     output_mode: Mapped[str] = mapped_column(String(32))
     marketplace_short_pitch: Mapped[str] = mapped_column(Text)
     marketplace_price: Mapped[str] = mapped_column(String(255))
+    payment_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    payment_chain: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payment_currency: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    payment_amount_atomic: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    payment_decimals: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payment_recipient_address: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
     marketplace_trust_badge: Mapped[str] = mapped_column(String(255))
     marketplace_rating: Mapped[float] = mapped_column(Float)
     marketplace_review_count: Mapped[int] = mapped_column(Integer)
@@ -91,9 +100,48 @@ class AgentRunRecord(Base):
     input_payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     output_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payment_session_id: Mapped[int | None] = mapped_column(
+        ForeignKey("payment_sessions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    payment_status: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    payment_chain: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payment_currency: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    payment_amount_atomic: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    payment_decimals: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payment_recipient_address: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
+    payment_transaction_hash: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
+    )
+    payment_error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payment_settled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
     agent: Mapped[AgentRecord] = relationship()
+    payment_session: Mapped[PaymentSessionRecord | None] = relationship()
+
+
+class PaymentSessionRecord(Base):
+    __tablename__ = "payment_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    wallet_address: Mapped[str] = mapped_column(String(255), index=True)
+    label: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    chain: Mapped[str] = mapped_column(String(64))
+    currency: Mapped[str] = mapped_column(String(16))
+    budget_atomic: Mapped[int] = mapped_column(BigInteger)
+    spent_atomic: Mapped[int] = mapped_column(BigInteger, default=0)
+    decimals: Mapped[int] = mapped_column(Integer, default=18)
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)

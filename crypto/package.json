@@ -5,6 +5,7 @@
   "scripts": {
     "build": "XDG_CONFIG_HOME=$PWD/.config XDG_CACHE_HOME=$PWD/.cache hardhat compile",
     "deploy:etherlink": "XDG_CONFIG_HOME=$PWD/.config XDG_CACHE_HOME=$PWD/.cache hardhat run scripts/deploy.ts --network etherlink",
+    "settle:etherlink": "XDG_CONFIG_HOME=$PWD/.config XDG_CACHE_HOME=$PWD/.cache hardhat run scripts/settle.ts --network etherlink",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

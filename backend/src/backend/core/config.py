@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     mcp_path: str = "/mcp"
     mcp_bearer_token: str | None = None
     database_url: str = Field()
+    payments_enabled: bool = False
+    payment_chain: str = "etherlink-shadownet"
+    payment_rpc_url: str = "https://node.shadownet.etherlink.com"
+    payment_contract_address: str | None = None
+    payment_signer_private_key: str | None = None
 
 
 @lru_cache

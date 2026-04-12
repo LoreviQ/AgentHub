@@ -162,6 +162,53 @@
         }
       ]
     },
+    "payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "chain",
+        "currency",
+        "amount_xtz"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "chain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currency": {
+          "type": "string",
+          "const": "XTZ"
+        },
+        "amount_xtz": {
+          "type": "string",
+          "pattern": "^[0-9]+(?:\\.[0-9]{1,18})?$"
+        },
+        "recipient_address": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "recipient_address"
+            ]
+          }
+        }
+      ]
+    },
     "public_instructions": {
       "type": "string",
       "minLength": 1

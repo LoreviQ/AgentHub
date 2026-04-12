@@ -70,7 +70,30 @@ The MCP server exposes:
 
 - `search_marketplace`
 - `get_agent_details`
+- `authorize_payment`
 - `invoke_agent`
+
+## Demo Payments
+
+The backend now includes a hackathon-grade Etherlink shadownet payment flow:
+
+- Agents can expose structured XTZ pricing and a payout wallet.
+- Clients can create a capped delegated payment session at `POST /api/payments/sessions`.
+- MCP clients can do the same with `authorize_payment`.
+- `invoke_agent` or `POST /api/agents/{id}/execute` can spend that token and settle on-chain after a successful run.
+
+Required environment for live settlement:
+
+- `AGENTHUB_PAYMENTS_ENABLED=true`
+- `AGENTHUB_PAYMENT_RPC_URL=https://node.shadownet.etherlink.com`
+- `AGENTHUB_PAYMENT_CONTRACT_ADDRESS=<deployed DemoAgentPayments address>`
+- `AGENTHUB_PAYMENT_SIGNER_PRIVATE_KEY=<demo payer private key>`
+
+The current flow is intentionally demo-oriented:
+
+- wallet ownership is not cryptographically proven yet
+- spending is delegated through a backend-managed demo signer
+- settlement happens after a successful run, without disputes or escrow refunds
 
 ## Migrations
 

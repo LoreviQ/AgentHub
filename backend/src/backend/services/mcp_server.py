@@ -14,12 +14,14 @@ from backend.services.marketplace import (
     invoke_marketplace_agent,
     search_marketplace_records,
 )
+from backend.services.payments import PaymentError, create_payment_session
 
 MCP_INSTRUCTIONS = """
 Browse AgentHub's live marketplace inventory and execute packaged specialist agents.
 Use search_marketplace first to discover candidates, then call get_agent_details before
 invoke_agent when you need the exact execution contract, tool policy, or example payload.
-Only pass structured args to invoke_agent.
+Use authorize_payment when you want AgentHub to pay on a user's behalf up to a capped
+demo budget. Only pass structured args to invoke_agent.
 """.strip()
 
 
@@ -53,6 +55,32 @@ def create_mcp_server() -> FastMCP:
             "filters_applied": active_filters.model_dump(),
             "results": results,
         }
+
+    @server.tool(
+        description=(
+            "Create a capped demo payment authorization for an Etherlink wallet label. "
+            "Returns a payment token that invoke_agent can spend against."
+        )
+    )
+    def authorize_payment(
+        wallet_address: str,
+        budget_xtz: str,
+        expires_in_minutes: int = 30,
+        label: str | None = None,
+    ) -> dict[str, Any]:
+        with Session(get_engine()) as session:
+            try:
+                payment_session = create_payment_session(
+                    session=session,
+                    wallet_address=wallet_address,
+                    budget_xtz=budget_xtz,
+                    expires_in_minutes=expires_in_minutes,
+                    label=label,
+                )
+            except PaymentError as exc:
+                raise ValueError(str(exc)) from exc
+
+        return {"payment_session": payment_session.model_dump()}
 
     @server.tool(
         description=(

@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from backend.api.routes.agents import router as agents_router
+from backend.api.routes.payments import router as payments_router
 from backend.core.config import get_settings
 from backend.services.mcp_server import create_mcp_server
 
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(title=settings.app_name, lifespan=mcp_http_app.lifespan)
     app.include_router(agents_router, prefix=settings.api_prefix)
+    app.include_router(payments_router, prefix=settings.api_prefix)
     mcp_mount_path = settings.mcp_path.rstrip("/") or "/"
     app.mount(
         mcp_mount_path,

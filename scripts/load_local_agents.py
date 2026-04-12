@@ -18,6 +18,7 @@ if str(BACKEND_SRC) not in sys.path:
 
 from backend.db.session import get_engine  # noqa: E402
 from backend.schemas.package import AgentPackageConfig  # noqa: E402
+from backend.services.payments import xtz_to_atomic  # noqa: E402
 from backend.services.registry import (  # noqa: E402
     SeedAgentRecord,
     SeedAgentTool,
@@ -128,6 +129,7 @@ def load_agent_packages(
                     agent_name=config.name,
                     description=config.description,
                     tools_enabled=config.tools.enabled,
+                    payment_config=config.payment,
                 ),
                 package_path=str(directory),
                 example_input_path=_optional_file(directory / "example-input.txt"),
@@ -168,11 +170,12 @@ def build_marketplace_seed(
     agent_name: str,
     description: str,
     tools_enabled: bool,
+    payment_config,
 ) -> dict[str, object]:
     demo_overrides: dict[str, dict[str, object]] = {
         "legal-checker": {
             "marketplace_short_pitch": "Fast contract-risk triage for founders, ops leads, and legal teams.",
-            "marketplace_price": "$0.08 / run",
+            "marketplace_price": "0.08 XTZ / run",
             "marketplace_trust_badge": "Platform verified",
             "marketplace_rating": 4.9,
             "marketplace_review_count": 26,
@@ -183,10 +186,16 @@ def build_marketplace_seed(
                 "Spot renewal, liability, and subprocessor risks",
                 "Give another assistant a safe escalation target",
             ],
+            "payment_enabled": True,
+            "payment_chain": "etherlink-shadownet",
+            "payment_currency": "XTZ",
+            "payment_amount_atomic": xtz_to_atomic("0.08"),
+            "payment_decimals": 18,
+            "payment_recipient_address": "0x1111111111111111111111111111111111111111",
         },
         "clause-extractor": {
             "marketplace_short_pitch": "Structured clause extraction with optional packaged tool support.",
-            "marketplace_price": "$0.14 / run",
+            "marketplace_price": "0.14 XTZ / run",
             "marketplace_trust_badge": "Platform verified",
             "marketplace_rating": 4.8,
             "marketplace_review_count": 18,
@@ -197,15 +206,37 @@ def build_marketplace_seed(
                 "Feed downstream compliance or review workflows",
                 "Show selective tool use inside a curated runtime",
             ],
+            "payment_enabled": True,
+            "payment_chain": "etherlink-shadownet",
+            "payment_currency": "XTZ",
+            "payment_amount_atomic": xtz_to_atomic("0.14"),
+            "payment_decimals": 18,
+            "payment_recipient_address": "0x2222222222222222222222222222222222222222",
         },
     }
     if agent_id in demo_overrides:
         return demo_overrides[agent_id]
 
-    default_price = "$0.14 / run" if tools_enabled else "$0.08 / run"
+    payment_enabled = bool(payment_config and payment_config.enabled)
+    payment_amount_xtz = (
+        payment_config.amount_xtz
+        if payment_config and payment_config.enabled
+        else ("0.14" if tools_enabled else "0.08")
+    )
+    default_price = f"{payment_amount_xtz} XTZ / run"
     return {
         "marketplace_short_pitch": description,
         "marketplace_price": default_price,
+        "payment_enabled": payment_enabled,
+        "payment_chain": payment_config.chain if payment_enabled else None,
+        "payment_currency": payment_config.currency if payment_enabled else None,
+        "payment_amount_atomic": (
+            xtz_to_atomic(payment_config.amount_xtz) if payment_enabled else None
+        ),
+        "payment_decimals": 18 if payment_enabled else None,
+        "payment_recipient_address": (
+            payment_config.recipient_address if payment_enabled else None
+        ),
         "marketplace_trust_badge": "Pending review",
         "marketplace_rating": 0.0,
         "marketplace_review_count": 0,

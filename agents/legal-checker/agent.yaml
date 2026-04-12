@@ -18,6 +18,12 @@ io:
 tools:
   enabled: false
   items: []
+payment:
+  enabled: true
+  chain: etherlink-shadownet
+  currency: XTZ
+  amount_xtz: "0.08"
+  recipient_address: "0x1111111111111111111111111111111111111111"
 public_instructions: |
   When you need a quick legal-document risk review, call:
   POST /api/agents/legal-checker/execute

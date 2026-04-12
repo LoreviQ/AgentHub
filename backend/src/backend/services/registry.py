@@ -41,6 +41,12 @@ class SeedAgentRecord:
     output_mode: str
     marketplace_short_pitch: str
     marketplace_price: str
+    payment_enabled: bool
+    payment_chain: str | None
+    payment_currency: str | None
+    payment_amount_atomic: int | None
+    payment_decimals: int | None
+    payment_recipient_address: str | None
     marketplace_trust_badge: str
     marketplace_rating: float
     marketplace_review_count: int
@@ -97,6 +103,12 @@ def hydrate_agent_record(record: AgentRecord, agent: SeedAgentRecord) -> None:
     record.output_mode = agent.output_mode
     record.marketplace_short_pitch = agent.marketplace_short_pitch
     record.marketplace_price = agent.marketplace_price
+    record.payment_enabled = agent.payment_enabled
+    record.payment_chain = agent.payment_chain
+    record.payment_currency = agent.payment_currency
+    record.payment_amount_atomic = agent.payment_amount_atomic
+    record.payment_decimals = agent.payment_decimals
+    record.payment_recipient_address = agent.payment_recipient_address
     record.marketplace_trust_badge = agent.marketplace_trust_badge
     record.marketplace_rating = agent.marketplace_rating
     record.marketplace_review_count = agent.marketplace_review_count
