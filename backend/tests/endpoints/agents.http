@@ -1,7 +1,8 @@
 # AgentHub API smoke tests for the VS Code REST Client extension.
 # Start the backend with the "Backend API (.env.local)" launch profile first.
 
-@host = https://agenthubapi.oliver.tj
+#@host = https://agenthubapi.oliver.tj
+@host = http://127.0.0.1:8000
 @api = {{host}}/api
 @agentId = legal-checker
 
@@ -32,7 +33,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "input": "This agreement renews automatically every 12 months unless terminated 60 days in advance. Vendor liability is capped at fees paid in the prior 3 months."
+  "input": "This agreement renews automatically every 12 months unless terminated 60 days in advance. Vendor liability is capped at fees paid in the prior 3 months.",
+  "payment_token": "OcE29zLozUTITYHMqgFGaRtKKLJUVRGA"
 }
 
 ###
@@ -50,3 +52,15 @@ Content-Type: application/json
 # Not found case
 GET {{api}}/agents/does-not-exist
 Accept: application/json
+
+###
+# Create a payment session
+POST {{api}}/payments/sessions
+Accept: application/json
+Content-Type: application/json
+
+{
+  "wallet_address": "0x802373846Cd4349a61Eb55Ed9d71c71Bffc20d71",
+  "budget_xtz": "0.50",
+  "label": "Demo buyer"
+}

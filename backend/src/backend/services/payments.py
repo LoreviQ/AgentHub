@@ -261,10 +261,6 @@ def submit_etherlink_settlement(
         )
         transaction["gas"] = web3.eth.estimate_gas(transaction)
 
-        gas_price = web3.eth.gas_price
-        if gas_price is not None:
-            transaction["gasPrice"] = gas_price
-
         signed = signer.sign_transaction(transaction)
         tx_hash = web3.eth.send_raw_transaction(signed.raw_transaction)
         receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
