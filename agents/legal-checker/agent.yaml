@@ -23,7 +23,7 @@ payment:
   chain: etherlink-shadownet
   currency: XTZ
   amount_xtz: "0.08"
-  recipient_address: "0x1111111111111111111111111111111111111111"
+  recipient_address: "0xFc775B30b226499123e098d5A817b3aDcFA12446"
 public_instructions: |
   When you need a quick legal-document risk review, call:
   POST /api/agents/legal-checker/execute
