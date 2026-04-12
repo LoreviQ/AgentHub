@@ -3,36 +3,57 @@
 This repo now includes a conservative production stack in
 `docker-compose.build.yml` and `docker-compose.deploy.yml`.
 
-The intended split is:
+The production-friendly flow is:
 
-- `docker-compose.build.yml`: build the backend and frontend images on the server
-- `docker-compose.deploy.yml`: paste into Coolify so it deploys those images
+- build and push the backend image to an OCI registry
+- build and push the frontend image to an OCI registry
+- build and push any packaged tool image to an OCI registry
+- point Coolify at those pushed image tags with `docker-compose.deploy.yml`
+
+Using host-local image tags such as `agenthub-backend:local` can work on a
+single machine, but it is brittle with Coolify because redeploys commonly
+expect pullable image references.
 
 The deployment setup still does not automatically:
 
 - run Alembic migrations
 - load the demo agents
-- mount `/var/run/docker.sock`
-- build or pull packaged tool images
 
-That keeps the first external deployment safer and easier to reason about.
+That keeps the first external deployment safer and easier to reason about, but
+it means there is one short post-deploy setup step for migrations.
 
-## Build The Images On The Server
+## Prepare Registry Image Tags
 
 1. Copy `.env.prod.example` to `.env.prod`.
-2. Fill in at least:
-   - `NEXT_PUBLIC_GIT_REPO_URL`
-   - `NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL`
-3. Start the stack:
+2. Replace the example image tags with real registry paths, for example:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.build.yml build
+AGENTHUB_BACKEND_IMAGE=ghcr.io/your-org/agenthub-backend:latest
+AGENTHUB_FRONTEND_IMAGE=ghcr.io/your-org/agenthub-frontend:latest
+CLAUSE_TOOL_IMAGE=ghcr.io/your-org/agenthub-clause-tools:0.1.0
 ```
 
-That produces the local server images referenced by default in the deploy file:
+3. Update [agents/clause-extractor/agent.yaml](/home/lore/workspace/AgentHub/agents/clause-extractor/agent.yaml)
+   so `tools.items[0].image` matches `CLAUSE_TOOL_IMAGE`.
 
-- `agenthub-backend:local`
-- `agenthub-frontend:local`
+The loader stores the exact image string from `agent.yaml` when you use
+`--tool-image-mode declared`, so those values must match.
+
+## Build And Push Images
+
+Log in to your registry on the machine that will build the images, then run:
+
+```bash
+./scripts/publish_images.sh
+```
+
+That helper:
+
+- builds the backend and frontend images using `.env.prod`
+- pushes `AGENTHUB_BACKEND_IMAGE`
+- pushes `AGENTHUB_FRONTEND_IMAGE`
+- builds the clause extractor tool image
+- pushes `CLAUSE_TOOL_IMAGE`
 
 ## Paste The Deploy Compose Into Coolify
 
@@ -43,14 +64,11 @@ Then set the Coolify environment values, especially:
 
 - `POSTGRES_PASSWORD`
 - `OPENROUTER_API_KEY`
+- `AGENTHUB_BACKEND_IMAGE`
+- `AGENTHUB_FRONTEND_IMAGE`
 - `NEXT_PUBLIC_GIT_REPO_URL`
 - `NEXT_MCP_ADDRESS`
 - `NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL`
-
-If you keep the default image names, Coolify should use:
-
-- `agenthub-backend:local`
-- `agenthub-frontend:local`
 
 ## Recommended Public Domains
 
@@ -73,6 +91,36 @@ Only public-facing URLs should point at `agenthubapi.oliver.tj`.
 The backend service in `docker-compose.deploy.yml` mounts
 `/var/run/docker.sock` so the tool-enabled demo agent can run its packaged tool
 container on the server.
+
+That means the clause extractor tool image only needs to be available to the
+server's Docker engine under the tag stored in the database. The easiest way to
+guarantee that with Coolify is to publish the tool image to a registry first
+and keep the registry tag in `agent.yaml`.
+
+## Post-Deploy Setup
+
+After Coolify starts the stack, run the migration job once on the server:
+
+```bash
+docker run --rm \
+  --network host \
+  --env-file .env.prod \
+  "${AGENTHUB_BACKEND_IMAGE}" \
+  alembic upgrade head
+```
+
+If your database is running in a Docker bridge network instead of on the host,
+replace `--network host` with the correct Docker network and make sure
+`AGENTHUB_DATABASE_URL` points at the reachable Postgres hostname.
+
+If you later seed demo agents remotely, the important production rule is still:
+
+- publish any tool image first
+- keep the final registry tag in `agent.yaml`
+- run the loader in `declared` mode
+
+That way the backend stores a pullable image reference and can execute the tool
+container via the mounted Docker socket.
 
 ## Important Loader Caveat
 
