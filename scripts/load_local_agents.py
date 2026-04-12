@@ -172,61 +172,13 @@ def build_marketplace_seed(
     tools_enabled: bool,
     payment_config,
 ) -> dict[str, object]:
-    demo_overrides: dict[str, dict[str, object]] = {
-        "legal-checker": {
-            "marketplace_short_pitch": "Fast contract-risk triage for founders, ops leads, and legal teams.",
-            "marketplace_price": "0.08 XTZ / run",
-            "marketplace_trust_badge": "Platform verified",
-            "marketplace_rating": 4.9,
-            "marketplace_review_count": 26,
-            "marketplace_categories": ["Legal", "Risk", "Founders"],
-            "marketplace_featured": True,
-            "marketplace_use_cases": [
-                "Review vendor agreements before redline",
-                "Spot renewal, liability, and subprocessor risks",
-                "Give another assistant a safe escalation target",
-            ],
-            "payment_enabled": True,
-            "payment_chain": "etherlink-shadownet",
-            "payment_currency": "XTZ",
-            "payment_amount_atomic": xtz_to_atomic("0.08"),
-            "payment_decimals": 18,
-            "payment_recipient_address": "0x1111111111111111111111111111111111111111",
-        },
-        "clause-extractor": {
-            "marketplace_short_pitch": "Structured clause extraction with optional packaged tool support.",
-            "marketplace_price": "0.14 XTZ / run",
-            "marketplace_trust_badge": "Platform verified",
-            "marketplace_rating": 4.8,
-            "marketplace_review_count": 18,
-            "marketplace_categories": ["Legal", "Extraction", "Structured Data"],
-            "marketplace_featured": True,
-            "marketplace_use_cases": [
-                "Transform contracts into structured clause records",
-                "Feed downstream compliance or review workflows",
-                "Show selective tool use inside a curated runtime",
-            ],
-            "payment_enabled": True,
-            "payment_chain": "etherlink-shadownet",
-            "payment_currency": "XTZ",
-            "payment_amount_atomic": xtz_to_atomic("0.14"),
-            "payment_decimals": 18,
-            "payment_recipient_address": "0x2222222222222222222222222222222222222222",
-        },
-    }
-    if agent_id in demo_overrides:
-        return demo_overrides[agent_id]
-
     payment_enabled = bool(payment_config and payment_config.enabled)
     payment_amount_xtz = (
         payment_config.amount_xtz
         if payment_config and payment_config.enabled
         else ("0.14" if tools_enabled else "0.08")
     )
-    default_price = f"{payment_amount_xtz} XTZ / run"
-    return {
-        "marketplace_short_pitch": description,
-        "marketplace_price": default_price,
+    payment_fields = {
         "payment_enabled": payment_enabled,
         "payment_chain": payment_config.chain if payment_enabled else None,
         "payment_currency": payment_config.currency if payment_enabled else None,
@@ -237,6 +189,48 @@ def build_marketplace_seed(
         "payment_recipient_address": (
             payment_config.recipient_address if payment_enabled else None
         ),
+    }
+
+    demo_overrides: dict[str, dict[str, object]] = {
+        "legal-checker": {
+            "marketplace_short_pitch": "Fast contract-risk triage for founders, ops leads, and legal teams.",
+            "marketplace_price": f"{payment_amount_xtz} XTZ / run",
+            "marketplace_trust_badge": "Platform verified",
+            "marketplace_rating": 4.9,
+            "marketplace_review_count": 26,
+            "marketplace_categories": ["Legal", "Risk", "Founders"],
+            "marketplace_featured": True,
+            "marketplace_use_cases": [
+                "Review vendor agreements before redline",
+                "Spot renewal, liability, and subprocessor risks",
+                "Give another assistant a safe escalation target",
+            ],
+            **payment_fields,
+        },
+        "clause-extractor": {
+            "marketplace_short_pitch": "Structured clause extraction with optional packaged tool support.",
+            "marketplace_price": f"{payment_amount_xtz} XTZ / run",
+            "marketplace_trust_badge": "Platform verified",
+            "marketplace_rating": 4.8,
+            "marketplace_review_count": 18,
+            "marketplace_categories": ["Legal", "Extraction", "Structured Data"],
+            "marketplace_featured": True,
+            "marketplace_use_cases": [
+                "Transform contracts into structured clause records",
+                "Feed downstream compliance or review workflows",
+                "Show selective tool use inside a curated runtime",
+            ],
+            **payment_fields,
+        },
+    }
+    if agent_id in demo_overrides:
+        return demo_overrides[agent_id]
+
+    default_price = f"{payment_amount_xtz} XTZ / run"
+    return {
+        "marketplace_short_pitch": description,
+        "marketplace_price": default_price,
+        **payment_fields,
         "marketplace_trust_badge": "Pending review",
         "marketplace_rating": 0.0,
         "marketplace_review_count": 0,

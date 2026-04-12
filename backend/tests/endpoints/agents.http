@@ -34,7 +34,7 @@ Content-Type: application/json
 
 {
   "input": "This agreement renews automatically every 12 months unless terminated 60 days in advance. Vendor liability is capped at fees paid in the prior 3 months.",
-  "payment_token": "OcE29zLozUTITYHMqgFGaRtKKLJUVRGA"
+  "payment_token": "LdzsJlbHeMJj1cfFcv1hsqCVCF1GpO7l"
 }
 
 ###
