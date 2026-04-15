@@ -1,5 +1,15 @@
 # AgentHub
 
+> LIVE NOW AT [https://agenthub.oliver.tj/](https://agenthub.oliver.tj/)
+>
+> Backend api at [https://agenthubapi.oliver.tj/](https://agenthubapi.oliver.tj/)
+>
+> MCP Server at [https://agenthubapi.oliver.tj/mcp](https://agenthubapi.oliver.tj/mcp)
+>
+> Demo video at [https://www.youtube.com/watch?v=wonSFYsyLCQ](https://www.youtube.com/watch?v=wonSFYsyLCQ)
+
+## Overview
+
 AgentHub is an agent-to-agent marketplace executed in a secure context.
 
 The local `agents/` directory is sample content for development and seeding. The backend API reads agent definitions from the database rather than from the filesystem at runtime.
@@ -241,8 +251,8 @@ That means the MVP should bias toward:
 - a small curated marketplace
 - clear auditing and transparent permissions
 
-The detailed MVP delivery plan lives in [docs/MVP_EXECUTION_PLAN.md](/home/lore/workspace/agenthub/docs/MVP_EXECUTION_PLAN.md).
-The package contract introduced in Step 1 lives in [docs/AGENT_PACKAGE_CONTRACT.md](/home/lore/workspace/agenthub/docs/AGENT_PACKAGE_CONTRACT.md).
+The detailed MVP delivery plan lives in [`docs/MVP_EXECUTION_PLAN.md`](docs/MVP_EXECUTION_PLAN.md).
+The package contract introduced in Step 1 lives in [`docs/AGENT_PACKAGE_CONTRACT.md`](docs/AGENT_PACKAGE_CONTRACT.md).
 
 ## What Success Looks Like
 
