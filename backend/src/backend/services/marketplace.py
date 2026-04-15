@@ -13,6 +13,12 @@ from backend.db.queries import get_agent_record_by_slug, list_agent_records
 from backend.schemas.agent import AgentToolResponse
 from backend.schemas.execution import AgentExecuteRequest
 from backend.services.execution import AgentExecutionError, execute_agent
+from backend.services.payments import (
+    PaymentAuthorizationError,
+    PaymentSettlementError,
+    build_agent_payment_response,
+    settle_agent_run_payment,
+)
 
 
 class MarketplaceFilters(BaseModel):
@@ -26,6 +32,7 @@ class MarketplaceFilters(BaseModel):
 
 class InvocationOptions(BaseModel):
     include_run_metadata: bool = True
+    payment_token: str | None = None
 
 
 class MarketplaceMeta(TypedDict):
@@ -196,6 +203,7 @@ def search_marketplace_records(
             "name": record.name,
             "short_pitch": meta["short_pitch"],
             "price": meta["price"],
+            "payment": build_agent_payment_response(record).model_dump(),
             "trust_badge": meta["trust_badge"],
             "rating_review_summary": _rating_summary(meta),
             "why_this_matched": _build_match_snippet(
@@ -226,6 +234,7 @@ def get_agent_marketplace_details(
         "description": record.description,
         "short_pitch": meta["short_pitch"],
         "price": meta["price"],
+        "payment": build_agent_payment_response(record).model_dump(),
         "trust_badge": meta["trust_badge"],
         "rating_review_summary": _rating_summary(meta),
         "categories": meta["categories"],
@@ -295,16 +304,29 @@ async def invoke_marketplace_agent(
     run = await execute_agent(
         session=session,
         record=record,
-        request=AgentExecuteRequest(input=user_input),
+        request=AgentExecuteRequest(
+            input=user_input,
+            payment_token=options.payment_token,
+        ),
     )
     if run.completed_at is None or run.output_payload is None:
         raise AgentExecutionError("Agent run completed without output")
+    try:
+        payment = settle_agent_run_payment(
+            session=session,
+            record=record,
+            run=run,
+            payment_token=options.payment_token,
+        )
+    except (PaymentAuthorizationError, PaymentSettlementError) as exc:
+        raise AgentExecutionError(str(exc)) from exc
 
     response: dict[str, Any] = {
         "run_id": run.id,
         "agent_id": record.slug,
         "status": run.status,
         "output": run.output_payload.get("output"),
+        "payment": payment.model_dump(),
     }
     if options.include_run_metadata:
         response["started_at"] = run.started_at.isoformat()

@@ -3,6 +3,16 @@ from typing import Any
 from pydantic import BaseModel
 
 
+class AgentPaymentResponse(BaseModel):
+    enabled: bool
+    chain: str | None = None
+    currency: str | None = None
+    amount_atomic: int | None = None
+    amount_display: str | None = None
+    decimals: int | None = None
+    recipient_address: str | None = None
+
+
 class AgentToolResponse(BaseModel):
     name: str
     description: str
@@ -19,6 +29,7 @@ class AgentListItemResponse(BaseModel):
     description: str
     marketplace_short_pitch: str
     marketplace_price: str
+    payment: AgentPaymentResponse
     marketplace_trust_badge: str
     marketplace_rating: float
     marketplace_review_count: int
@@ -38,6 +49,7 @@ class AgentDetailResponse(BaseModel):
     description: str
     marketplace_short_pitch: str
     marketplace_price: str
+    payment: AgentPaymentResponse
     marketplace_trust_badge: str
     marketplace_rating: float
     marketplace_review_count: int

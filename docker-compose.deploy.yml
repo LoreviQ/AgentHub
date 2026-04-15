@@ -28,8 +28,6 @@ services:
       AGENTHUB_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-agenthub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-agenthub}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       AGENTHUB_TOOL_IMAGE_TAG_PREFIX: ${AGENTHUB_TOOL_IMAGE_TAG_PREFIX:-agenthub}
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -44,8 +42,6 @@ services:
       NEXT_MCP_ADDRESS: ${NEXT_MCP_ADDRESS:-https://agenthubapi.oliver.tj/mcp/}
       NEXT_PUBLIC_GIT_REPO_URL: ${NEXT_PUBLIC_GIT_REPO_URL:-}
       NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: ${NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL:-https://agenthubapi.oliver.tj}
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
 
 volumes:
   postgres_prod_data:

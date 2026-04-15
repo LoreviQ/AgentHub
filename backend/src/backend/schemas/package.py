@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ModelConfig(BaseModel):
@@ -36,6 +36,14 @@ class ToolsConfig(BaseModel):
     items: list[ToolConfig]
 
 
+class PaymentConfig(BaseModel):
+    enabled: bool = False
+    chain: str = "etherlink-shadownet"
+    currency: Literal["XTZ"] = "XTZ"
+    amount_xtz: str = Field(default="0.000000", pattern=r"^[0-9]+(?:\.[0-9]{1,18})?$")
+    recipient_address: str | None = None
+
+
 class AgentPackageConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -48,4 +56,5 @@ class AgentPackageConfig(BaseModel):
     runtime: RuntimeConfig
     io: IOConfig
     tools: ToolsConfig
+    payment: PaymentConfig | None = None
     public_instructions: str

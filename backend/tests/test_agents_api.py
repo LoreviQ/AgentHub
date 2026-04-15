@@ -9,6 +9,7 @@ from backend.core.config import get_settings
 from backend.db.models import AgentRunRecord, AgentToolRecord
 from backend.db.session import get_engine, reset_database_state
 from backend.services.execution import AgentExecutionResult
+from backend.services.payments import xtz_to_atomic
 from backend.services.registry import SeedAgentRecord, SeedAgentTool, sync_registry
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.orm import Session
@@ -50,7 +51,13 @@ def _seed_example_agents() -> list[SeedAgentRecord]:
             input_mode="text",
             output_mode="json",
             marketplace_short_pitch="Structured clause extraction with optional packaged tool support.",
-            marketplace_price="$0.14 / run",
+            marketplace_price="0.14 XTZ / run",
+            payment_enabled=True,
+            payment_chain="etherlink-shadownet",
+            payment_currency="XTZ",
+            payment_amount_atomic=xtz_to_atomic("0.14"),
+            payment_decimals=18,
+            payment_recipient_address="0x2222222222222222222222222222222222222222",
             marketplace_trust_badge="Platform verified",
             marketplace_rating=4.8,
             marketplace_review_count=18,
@@ -102,7 +109,13 @@ def _seed_example_agents() -> list[SeedAgentRecord]:
             input_mode="text",
             output_mode="markdown",
             marketplace_short_pitch="Fast contract-risk triage for founders, ops leads, and legal teams.",
-            marketplace_price="$0.08 / run",
+            marketplace_price="0.08 XTZ / run",
+            payment_enabled=True,
+            payment_chain="etherlink-shadownet",
+            payment_currency="XTZ",
+            payment_amount_atomic=xtz_to_atomic("0.08"),
+            payment_decimals=18,
+            payment_recipient_address="0x1111111111111111111111111111111111111111",
             marketplace_trust_badge="Platform verified",
             marketplace_rating=4.9,
             marketplace_review_count=26,
@@ -143,7 +156,8 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
         payload = response.json()
         assert len(payload) == 2
         assert [item["id"] for item in payload] == ["clause-extractor", "legal-checker"]
-        assert payload[0]["marketplace_price"] == "$0.14 / run"
+        assert payload[0]["marketplace_price"] == "0.14 XTZ / run"
+        assert payload[0]["payment"]["currency"] == "XTZ"
         assert payload[1]["marketplace_trust_badge"] == "Platform verified"
 
         detail = await client.get("/api/agents/legal-checker")
@@ -153,6 +167,7 @@ async def test_list_and_get_agents(tmp_path: Path, monkeypatch) -> None:
         assert agent["model_provider"] == "openrouter"
         assert agent["marketplace_short_pitch"].startswith("Fast contract-risk triage")
         assert agent["marketplace_use_cases"][0] == "Review vendor agreements before redline"
+        assert agent["payment"]["amount_display"] == "0.08 XTZ"
         assert agent["tools"] == []
         assert agent["example_input"] is None
         assert agent["example_output"] is None
@@ -237,6 +252,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
     assert payload["agent_id"] == "legal-checker"
     assert payload["status"] == "completed"
     assert payload["output"] == "## Summary\nAuto-renewal needs review."
+    assert payload["payment"]["status"] == "not_requested"
 
     with Session(engine) as session:
         runs = session.query(AgentRunRecord).all()
@@ -249,6 +265,7 @@ async def test_execute_llm_only_agent_records_run(tmp_path: Path, monkeypatch) -
             "output": "## Summary\nAuto-renewal needs review.",
             "tool_calls": [],
         }
+        assert runs[0].payment_status == "not_requested"
 
 
 def test_normalize_openrouter_model_name() -> None:
@@ -299,7 +316,7 @@ def test_load_agent_packages_builds_local_tool_images(tmp_path: Path) -> None:
     clause_extractor = next(package for package in packages if package.slug == "clause-extractor")
     assert built_images == [("clause-extractor", "0.1.0", "clause_extractor")]
     assert clause_extractor.tools[0].image == "agenthub-local/clause-extractor-clause_extractor:0.1.0"
-    assert clause_extractor.marketplace_price == "$0.14 / run"
+    assert clause_extractor.marketplace_price == "0.14 XTZ / run"
     assert clause_extractor.marketplace_trust_badge == "Platform verified"
 
 
@@ -387,6 +404,7 @@ async def test_execute_tool_enabled_agent_runs_registered_tool(
     payload = response.json()
     assert payload["agent_id"] == "clause-extractor"
     assert payload["status"] == "completed"
+    assert payload["payment"]["status"] == "not_requested"
     assert payload["output"] == {
         "clauses": [
             {"type": "confidentiality"},
@@ -424,3 +442,81 @@ async def test_execute_tool_enabled_agent_runs_registered_tool(
                 }
             ],
         }
+        assert runs[0].payment_status == "not_requested"
+
+
+@pytest.mark.anyio
+async def test_create_payment_session_and_settle_agent_run(
+    tmp_path: Path, monkeypatch
+) -> None:
+    db_path = tmp_path / "test.db"
+    monkeypatch.setenv("AGENTHUB_DATABASE_URL", f"sqlite:///{db_path}")
+    reset_database_state()
+    get_settings.cache_clear()
+    _run_migrations(tmp_path, get_settings().database_url)
+    engine = get_engine()
+    sync_registry(engine=engine, agents=_seed_example_agents())
+
+    from backend.main import create_app
+    from backend.services import execution, payments
+
+    class FakeProvider:
+        async def generate(
+            self,
+            *,
+            system_prompt: str,
+            user_input: str,
+            model_name: str,
+            temperature: float,
+            max_tokens: int,
+            output_mode: str,
+            tools,
+        ) -> AgentExecutionResult:
+            return AgentExecutionResult(output="## Paid\nDone.")
+
+    monkeypatch.setattr(
+        execution,
+        "get_provider",
+        lambda *, provider_name: FakeProvider(),
+    )
+    monkeypatch.setattr(
+        payments,
+        "submit_etherlink_settlement",
+        lambda *, run, recipient_address, amount_atomic: payments.OnchainSettlementResult(
+            transaction_hash="0xabc123"
+        ),
+    )
+
+    app = create_app()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        payment_session_response = await client.post(
+            "/api/payments/sessions",
+            json={
+                "wallet_address": "0xfeed00000000000000000000000000000000beef",
+                "budget_xtz": "0.50",
+                "label": "Demo buyer",
+            },
+        )
+        assert payment_session_response.status_code == 200
+        payment_session = payment_session_response.json()
+        assert payment_session["budget_display"] == "0.5 XTZ"
+
+        response = await client.post(
+            "/api/agents/legal-checker/execute",
+            json={
+                "input": "Review this clause.",
+                "payment_token": payment_session["payment_token"],
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["payment"]["status"] == "settled"
+    assert payload["payment"]["transaction_hash"] == "0xabc123"
+    assert payload["payment"]["amount_display"] == "0.08 XTZ"
+
+    with Session(engine) as session:
+        run = session.query(AgentRunRecord).one()
+        assert run.payment_status == "settled"
+        assert run.payment_transaction_hash == "0xabc123"

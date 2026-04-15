@@ -7,7 +7,7 @@
 # - If `AGENTHUB_MCP_BEARER_TOKEN` is set, add:
 #   Authorization: Bearer <token>
 
-@host = http://127.0.0.1:8000
+@host = https://agenthubapi.oliver.tj
 @mcp = {{host}}/mcp/
 @protocolVersion = 2025-03-26
 

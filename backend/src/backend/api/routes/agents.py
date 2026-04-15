@@ -13,6 +13,12 @@ from backend.schemas.agent import (
 )
 from backend.schemas.execution import AgentExecuteRequest, AgentExecuteResponse
 from backend.services.execution import AgentExecutionError, execute_agent
+from backend.services.payments import (
+    PaymentAuthorizationError,
+    PaymentSettlementError,
+    build_agent_payment_response,
+    settle_agent_run_payment,
+)
 
 router = APIRouter(tags=["agents"])
 
@@ -49,6 +55,7 @@ async def list_agents(session: DbSession) -> list[AgentListItemResponse]:
             description=record.description,
             marketplace_short_pitch=record.marketplace_short_pitch,
             marketplace_price=record.marketplace_price,
+            payment=build_agent_payment_response(record),
             marketplace_trust_badge=record.marketplace_trust_badge,
             marketplace_rating=record.marketplace_rating,
             marketplace_review_count=record.marketplace_review_count,
@@ -79,6 +86,7 @@ async def get_agent(agent_id: str, session: DbSession) -> AgentDetailResponse:
         description=record.description,
         marketplace_short_pitch=record.marketplace_short_pitch,
         marketplace_price=record.marketplace_price,
+        payment=build_agent_payment_response(record),
         marketplace_trust_badge=record.marketplace_trust_badge,
         marketplace_rating=record.marketplace_rating,
         marketplace_review_count=record.marketplace_review_count,
@@ -133,6 +141,17 @@ async def execute_agent_route(
         message = str(exc)
         status_code = 501 if "Tool-enabled agents" in message else 502
         raise HTTPException(status_code=status_code, detail=message) from exc
+    try:
+        payment = settle_agent_run_payment(
+            session=session,
+            record=record,
+            run=run,
+            payment_token=request.payment_token,
+        )
+    except PaymentAuthorizationError as exc:
+        raise HTTPException(status_code=402, detail=str(exc)) from exc
+    except PaymentSettlementError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     if run.completed_at is None or run.output_payload is None:
         raise HTTPException(
@@ -144,6 +163,7 @@ async def execute_agent_route(
         agent_id=record.slug,
         status="completed",
         output=run.output_payload["output"],
+        payment=payment,
         started_at=run.started_at,
         completed_at=run.completed_at,
     )

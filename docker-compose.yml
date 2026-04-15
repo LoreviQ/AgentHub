@@ -86,11 +86,16 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_GIT_REPO_URL: https://github.com/LoreviQ/AgentHub
+        NEXT_PUBLIC_AGENTHUB_PUBLIC_API_URL: http://127.0.0.1:8000
+        NEXT_MCP_ADDRESS: http://127.0.0.1:8000/mcp
     image: agenthub-frontend:local
     env_file:
       - ./frontend/.env.local
     environment:
       AGENTHUB_BACKEND_URL: http://backend-api:8000
+      NEXT_MCP_ADDRESS: http://127.0.0.1:8000/mcp
     depends_on:
       backend-api:
         condition: service_started

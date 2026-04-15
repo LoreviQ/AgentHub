@@ -8,6 +8,7 @@ from alembic.config import Config
 from backend.core.config import get_settings
 from backend.db.session import get_engine, reset_database_state
 from backend.services.execution import AgentExecutionResult
+from backend.services.payments import xtz_to_atomic
 from backend.services.registry import SeedAgentRecord, SeedAgentTool, sync_registry
 from httpx import ASGITransport, AsyncClient
 
@@ -63,7 +64,13 @@ def _seed_example_agents() -> list[SeedAgentRecord]:
             input_mode="text",
             output_mode="json",
             marketplace_short_pitch="Structured clause extraction with optional packaged tool support.",
-            marketplace_price="$0.14 / run",
+            marketplace_price="0.14 XTZ / run",
+            payment_enabled=True,
+            payment_chain="etherlink-shadownet",
+            payment_currency="XTZ",
+            payment_amount_atomic=xtz_to_atomic("0.14"),
+            payment_decimals=18,
+            payment_recipient_address="0x2222222222222222222222222222222222222222",
             marketplace_trust_badge="Platform verified",
             marketplace_rating=4.8,
             marketplace_review_count=18,
@@ -115,7 +122,13 @@ def _seed_example_agents() -> list[SeedAgentRecord]:
             input_mode="text",
             output_mode="markdown",
             marketplace_short_pitch="Fast contract-risk triage for founders, ops leads, and legal teams.",
-            marketplace_price="$0.08 / run",
+            marketplace_price="0.08 XTZ / run",
+            payment_enabled=True,
+            payment_chain="etherlink-shadownet",
+            payment_currency="XTZ",
+            payment_amount_atomic=xtz_to_atomic("0.08"),
+            payment_decimals=18,
+            payment_recipient_address="0x1111111111111111111111111111111111111111",
             marketplace_trust_badge="Platform verified",
             marketplace_rating=4.9,
             marketplace_review_count=26,
@@ -157,7 +170,8 @@ async def test_search_marketplace_tool_returns_ranked_results(
         filters=MarketplaceFilters(tools_enabled=True),
     )
     assert payload["results"][0]["agent_id"] == "clause-extractor"
-    assert payload["results"][0]["price"] == "$0.14 / run"
+    assert payload["results"][0]["price"] == "0.14 XTZ / run"
+    assert payload["results"][0]["payment"]["currency"] == "XTZ"
     assert payload["results"][0]["trust_badge"] == "Platform verified"
     assert "structured" in payload["results"][0]["why_this_matched"].lower()
 
@@ -177,7 +191,8 @@ async def test_get_agent_details_tool_returns_contract(tmp_path: Path, monkeypat
     payload = await _invoke_tool(server, "get_agent_details", agent_id="legal-checker")
     agent = payload["agent"]
     assert agent["agent_id"] == "legal-checker"
-    assert agent["price"] == "$0.08 / run"
+    assert agent["price"] == "0.08 XTZ / run"
+    assert agent["payment"]["amount_display"] == "0.08 XTZ"
     assert agent["io_contract"]["request_schema"]["required"] == ["input"]
     assert agent["model"]["name"] == "openai/gpt-5-mini"
     assert agent["executable"] is True
@@ -194,7 +209,7 @@ async def test_invoke_agent_tool_executes_agent(tmp_path: Path, monkeypatch) -> 
 
     from backend.services.mcp_server import create_mcp_server
     from backend.services.marketplace import InvocationOptions
-    from backend.services import execution
+    from backend.services import execution, payments
 
     class FakeProvider:
         async def generate(
@@ -222,17 +237,35 @@ async def test_invoke_agent_tool_executes_agent(tmp_path: Path, monkeypatch) -> 
         "get_provider",
         lambda *, provider_name: FakeProvider(),
     )
+    monkeypatch.setattr(
+        payments,
+        "submit_etherlink_settlement",
+        lambda *, run, recipient_address, amount_atomic: payments.OnchainSettlementResult(
+            transaction_hash="0xabc123"
+        ),
+    )
     server = create_mcp_server()
+    payment_session = await _invoke_tool(
+        server,
+        "authorize_payment",
+        wallet_address="0xfeed00000000000000000000000000000000beef",
+        budget_xtz="0.50",
+        label="Demo buyer",
+    )
     payload = await _invoke_tool(
         server,
         "invoke_agent",
         agent_id="legal-checker",
         input="Flag the risky renewal language.",
-        options=InvocationOptions(include_run_metadata=False),
+        options=InvocationOptions(
+            include_run_metadata=False,
+            payment_token=payment_session["payment_session"]["payment_token"],
+        ),
     )
     assert payload["agent_id"] == "legal-checker"
     assert payload["run"]["status"] == "completed"
     assert payload["run"]["output"] == "## Concerns\nAuto-renewal looks one-sided."
+    assert payload["run"]["payment"]["status"] == "settled"
     assert "started_at" not in payload["run"]
 
 

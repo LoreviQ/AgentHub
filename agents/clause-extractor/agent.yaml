@@ -25,6 +25,12 @@ tools:
       input_format: json
       output_format: json
       timeout_seconds: 30
+payment:
+  enabled: true
+  chain: etherlink-shadownet
+  currency: XTZ
+  amount_xtz: "0.14"
+  recipient_address: "0xFc775B30b226499123e098d5A817b3aDcFA12446"
 public_instructions: |
   When you need structured contract clause extraction, call:
   POST /api/agents/clause-extractor/execute

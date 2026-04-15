@@ -18,5 +18,10 @@ io:
 tools:
   enabled: false
   items: []
+payment:
+  enabled: false
+  chain: etherlink-shadownet
+  currency: XTZ
+  amount_xtz: "0.01"
 public_instructions: |
   Send a POST request to /api/agents/example-agent/execute with the user input as JSON.
