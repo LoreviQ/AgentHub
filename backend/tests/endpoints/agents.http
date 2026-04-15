@@ -34,7 +34,7 @@ Content-Type: application/json
 
 {
   "input": "This agreement renews automatically every 12 months unless terminated 60 days in advance. Vendor liability is capped at fees paid in the prior 3 months.",
-  "payment_token": "LdzsJlbHeMJj1cfFcv1hsqCVCF1GpO7l"
+  "payment_token": "i0K65Jp1_Jrr279F7qbb4jDINTWZRrYp"
 }
 
 ###
@@ -44,7 +44,8 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "input": "The agreement automatically renews for successive one-year terms unless either party gives 30 days notice before renewal. Either party may terminate for material breach if the breach is not cured within 15 days. Each party must keep confidential information secret and may disclose it only as required by law. Vendor liability is limited to the fees paid under this agreement during the prior 12 months."
+  "input": "The agreement automatically renews for successive one-year terms unless either party gives 30 days notice before renewal. Either party may terminate for material breach if the breach is not cured within 15 days. Each party must keep confidential information secret and may disclose it only as required by law. Vendor liability is limited to the fees paid under this agreement during the prior 12 months.",
+  "payment_token": "i0K65Jp1_Jrr279F7qbb4jDINTWZRrYp"
 }
 
 
