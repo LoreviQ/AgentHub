@@ -8,8 +8,10 @@
 #   Authorization: Bearer <token>
 
 @host = https://agenthubapi.oliver.tj
+#@host = http://127.0.0.1:8000
 @mcp = {{host}}/mcp/
 @protocolVersion = 2025-03-26
+@payment_token = ZLZOtGT6mphEJzeM1gLYnedUHtK6eSIU
 
 ###
 # Initialize MCP session
@@ -84,7 +86,7 @@ Content-Type: application/json
 }
 
 ###
-# Invoke one live agent
+# Create a demo payment authorization
 POST {{mcp}}
 Accept: application/json, text/event-stream
 Content-Type: application/json
@@ -94,12 +96,33 @@ Content-Type: application/json
   "id": 5,
   "method": "tools/call",
   "params": {
+    "name": "authorize_payment",
+    "arguments": {
+      "wallet_address": "0x802373846Cd4349a61Eb55Ed9d71c71Bffc20d71",
+      "budget_xtz": "0.50",
+      "label": "Demo buyer"
+    }
+  }
+}
+
+###
+# Invoke one live agent
+POST {{mcp}}
+Accept: application/json, text/event-stream
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
     "name": "invoke_agent",
     "arguments": {
       "agent_id": "legal-checker",
       "input": "Review this clause for renewal and liability risk: The agreement renews automatically each year unless either party gives notice 60 days before renewal. Vendor liability is capped at fees paid in the prior 3 months.",
       "options": {
-        "include_run_metadata": true
+        "include_run_metadata": true,
+        "payment_token": "{{payment_token}}"
       }
     }
   }
